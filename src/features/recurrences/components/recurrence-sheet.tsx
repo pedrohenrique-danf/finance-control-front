@@ -196,10 +196,9 @@ export function RecurrenceSheet({ open, onOpenChange, recurrence, categories, ac
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-4">
-          <div className="flex items-center justify-between gap-3">
-            <label htmlFor="rec-no-end" className="cursor-pointer text-sm font-semibold">
-              Sem data de término
-            </label>
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: o Switch é renderizado pelo Controller dentro do label */}
+          <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3">
+            <span className="text-sm font-semibold">Sem data de término</span>
             <Controller
               control={form.control}
               name="noEnd"
@@ -207,7 +206,7 @@ export function RecurrenceSheet({ open, onOpenChange, recurrence, categories, ac
                 <Switch id="rec-no-end" checked={field.value} onCheckedChange={(next) => field.onChange(next)} />
               )}
             />
-          </div>
+          </label>
           {noEnd ? null : (
             <Field label="Data de fim" htmlFor="rec-end" error={errors.endDate?.message} className="mt-3">
               <DateInput {...fieldA11y("rec-end", errors.endDate?.message)} {...form.register("endDate")} />

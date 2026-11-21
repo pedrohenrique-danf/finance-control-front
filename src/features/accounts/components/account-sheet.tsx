@@ -41,13 +41,14 @@ function SwitchRow({
   onCheckedChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4">
-      <label htmlFor={id} className="min-w-0 cursor-pointer">
+    // O rótulo envolve o Switch (Base UI): tocar em qualquer parte da faixa alterna.
+    <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4">
+      <span className="min-w-0">
         <span className="block text-sm font-semibold">{title}</span>
         <span className="block text-xs text-muted-foreground">{hint}</span>
-      </label>
+      </span>
       <Switch id={id} checked={checked} onCheckedChange={(next) => onCheckedChange(next)} />
-    </div>
+    </label>
   );
 }
 

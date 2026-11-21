@@ -80,7 +80,7 @@ export function Segmented<T extends string>({
             aria-checked={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              "h-10 rounded-xl text-sm font-semibold transition-all duration-200",
+              "relative h-10 rounded-xl text-sm font-semibold transition-all duration-200 after:absolute after:inset-x-0 after:-inset-y-0.5 after:content-['']",
               active
                 ? (option.activeClassName ?? "bg-card text-foreground shadow-soft")
                 : "text-muted-foreground hover:text-foreground",
@@ -110,7 +110,7 @@ export function FilterChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold transition-colors duration-150",
+        "relative h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold transition-colors duration-150 after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']",
         active
           ? "bg-primary text-primary-foreground"
           : "border border-border bg-card text-muted-foreground hover:bg-muted",

@@ -336,13 +336,14 @@ export function TransactionSheet({
 
             {isEdit ? null : (
               <div className="rounded-2xl border border-border bg-card p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <label htmlFor="tx-repeat" className="min-w-0 cursor-pointer">
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: o Switch é renderizado pelo Controller dentro do label */}
+                <label className="flex cursor-pointer items-center justify-between gap-3">
+                  <span className="min-w-0">
                     <span className="block text-sm font-semibold">Repetir todo mês</span>
                     <span className="block text-xs text-muted-foreground">
                       Cria uma {type === "receita" ? "receita" : "despesa"} fixa automática
                     </span>
-                  </label>
+                  </span>
                   <Controller
                     control={form.control}
                     name="repeat"
@@ -357,7 +358,7 @@ export function TransactionSheet({
                       />
                     )}
                   />
-                </div>
+                </label>
                 {repeat ? (
                   <div className="mt-4 grid grid-cols-[96px_minmax(0,1fr)] gap-3">
                     <Field label="Vence dia" htmlFor="tx-due-day" error={errors.dueDay?.message}>

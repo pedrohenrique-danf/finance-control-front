@@ -111,7 +111,7 @@ function ImportCard({ onPreview }: { onPreview: (preview: ImportPreview) => void
         </pre>
         <a
           href="/import-export/export?modelo=1"
-          className="mt-2 inline-flex min-h-9 items-center gap-1 font-semibold text-primary underline-offset-4 hover:underline"
+          className="mt-2 inline-flex min-h-11 items-center gap-1 font-semibold text-primary underline-offset-4 hover:underline"
         >
           <FileSpreadsheet className="size-4" aria-hidden /> Baixar modelo
         </a>

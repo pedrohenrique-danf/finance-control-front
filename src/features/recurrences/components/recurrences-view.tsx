@@ -52,14 +52,15 @@ function RecurrenceRow({
           <ChevronRight className="mt-1 size-4 text-muted-foreground" aria-hidden />
         </div>
       </Link>
-      <div className="flex min-h-11 items-center justify-between border-t border-border px-3 py-1.5">
+      {/* A faixa inteira (44 px) aciona o interruptor. */}
+      <label className="flex min-h-11 cursor-pointer items-center justify-between rounded-b-2xl border-t border-border px-3 py-1.5 hover:bg-muted/40">
         <span className="text-xs font-medium text-muted-foreground">{r.active ? "Ativa" : "Pausada"}</span>
         <Switch
           checked={r.active}
           aria-label={`${r.active ? "Pausar" : "Reativar"} ${r.description}`}
           onCheckedChange={(next) => onToggle(next)}
         />
-      </div>
+      </label>
     </li>
   );
 }

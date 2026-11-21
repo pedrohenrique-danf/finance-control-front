@@ -198,7 +198,7 @@ export function StatementView({ filters, statement, categories, accounts }: Stat
         </button>
       </div>
 
-      <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 lg:mx-0 lg:px-0">
+      <div className="no-scrollbar -mx-5 -my-1 flex gap-2 overflow-x-auto px-5 py-1 lg:mx-0 lg:px-0">
         {QUICK_FILTERS.map((q) => (
           <FilterChip key={q.value} active={filters.quick === q.value} onClick={() => navigate({ quick: q.value })}>
             {q.label}

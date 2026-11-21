@@ -63,21 +63,19 @@ export function ExpenseDonut({ slices, total }: { slices: Slice[]; total: string
       <ul className="min-w-0 flex-1 space-y-1">
         {slices.map((slice, index) => (
           <li key={slice.key}>
-            <button
-              type="button"
+            {/* Destaque só no ponteiro; teclado e leitor de tela usam a tabela equivalente abaixo. */}
+            <div
               onPointerEnter={() => setActive(index)}
               onPointerLeave={() => setActive(null)}
-              onFocus={() => setActive(index)}
-              onBlur={() => setActive(null)}
               className={cn(
-                "flex min-h-7 w-full items-center gap-2 rounded-lg px-1 text-left text-xs transition-colors",
+                "flex min-h-7 w-full items-center gap-2 rounded-lg px-1 text-xs transition-colors",
                 active === index && "bg-muted",
               )}
             >
               <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: slice.color }} aria-hidden />
               <span className="min-w-0 flex-1 truncate text-foreground">{slice.name}</span>
               <span className="num font-semibold text-muted-foreground">{shares[index]}%</span>
-            </button>
+            </div>
           </li>
         ))}
       </ul>

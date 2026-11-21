@@ -104,7 +104,8 @@ export function TransactionItem(props: TransactionItemProps) {
         "relative flex min-h-[68px] w-full items-center gap-3 bg-card px-3 py-2.5 select-none disabled:cursor-default",
         !dragging && "transition-transform duration-200 ease-out",
         swipeable && "lg:pr-14",
-        onOpen && "cursor-pointer hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none",
+        onOpen &&
+          "cursor-pointer hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
       )}
     >
       <Content {...props} />

@@ -85,7 +85,6 @@ export function RegisterForm() {
             control={form.control}
             name="terms"
             render={({ field }) => (
-              // biome-ignore lint/a11y/noLabelWithoutControl: o Checkbox (Base UI) renderiza o controle dentro do label
               <label className="flex min-h-11 cursor-pointer items-start gap-3 py-1 text-sm text-muted-foreground">
                 <Checkbox
                   checked={field.value}
