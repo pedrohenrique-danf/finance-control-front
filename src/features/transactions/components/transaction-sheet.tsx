@@ -1,15 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { CategoryIcon } from "@/components/common/category-icon";
+import { AmountField } from "@/components/common/amount-field";
+import { CategoryPicker } from "@/components/common/category-picker";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { DateInput } from "@/components/common/date-input";
-import { Field, fieldA11y, fieldErrorId, Segmented } from "@/components/common/field";
+import { Field, fieldA11y, Segmented } from "@/components/common/field";
 import { FormAlert } from "@/components/common/form-alert";
 import { FormSheet } from "@/components/common/form-sheet";
 import { useShell } from "@/components/layout/shell-context";
@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { todayIso } from "@/lib/format/date";
-import { digitsToDecimal, formatMoneyPlain } from "@/lib/format/money";
 import { applyActionError } from "@/lib/forms/apply-action-error";
 import { cn } from "@/lib/utils";
 import {
@@ -59,115 +58,6 @@ function emptyValues(type: TransactionType, accountId: string): TransactionFormV
     nature: "variavel",
     status: "efetivada",
   };
-}
-
-/** Valor grande "R$ 0,00": cada dígito entra pela direita; teclado numérico no celular. */
-function AmountField({
-  value,
-  onChange,
-  type,
-  error,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  type: TransactionType;
-  error: string | undefined;
-}) {
-  const income = type === "receita";
-  return (
-    <div className={cn("rounded-3xl px-4 py-5 transition-colors", income ? "bg-income-soft" : "bg-expense-soft")}>
-      <div className="flex flex-col items-center">
-        <label htmlFor="tx-amount" className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-          Valor
-        </label>
-        <div className={cn("mt-1 flex items-baseline justify-center gap-1.5", income ? "text-income" : "text-expense")}>
-          <span className="text-xl font-bold" aria-hidden>
-            R$
-          </span>
-          <input
-            {...fieldA11y("tx-amount", error)}
-            inputMode="numeric"
-            autoComplete="off"
-            value={formatMoneyPlain(value || "0")}
-            onChange={(e) => onChange(digitsToDecimal(e.target.value))}
-            onFocus={(e) => {
-              const input = e.currentTarget;
-              requestAnimationFrame(() => input.setSelectionRange(input.value.length, input.value.length));
-            }}
-            className="num field-sizing-content max-w-full min-w-[4ch] bg-transparent text-center text-[42px] leading-none font-extrabold caret-current outline-none"
-          />
-        </div>
-      </div>
-      {error ? (
-        <p id={fieldErrorId("tx-amount")} role="alert" className="mt-2 text-center text-xs font-medium text-expense">
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function CategoryPicker({
-  categories,
-  value,
-  onChange,
-  error,
-  type,
-}: {
-  categories: readonly CategoryOption[];
-  value: string;
-  onChange: (id: string) => void;
-  error: string | undefined;
-  type: TransactionType;
-}) {
-  return (
-    <fieldset aria-describedby={error ? fieldErrorId("tx-category") : undefined}>
-      <legend className="mb-1.5 text-[13px] font-semibold">Categoria</legend>
-      {categories.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-          Nenhuma categoria de {type === "receita" ? "receita" : "despesa"} ainda.{" "}
-          <Link href="/categories" className="font-semibold text-primary underline-offset-4 hover:underline">
-            Criar categoria
-          </Link>
-        </p>
-      ) : (
-        <div role="radiogroup" aria-label="Categoria" className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-          {categories.map((c) => {
-            const selected = value === c.id;
-            return (
-              // biome-ignore lint/a11y/useSemanticElements: chips com ícone (padrão WAI-ARIA radiogroup)
-              <button
-                key={c.id}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => onChange(c.id)}
-                className={cn(
-                  "relative flex min-h-[84px] flex-col items-center justify-center gap-1.5 rounded-2xl border px-1 py-2.5 text-center text-[11px] leading-tight font-semibold transition-all duration-150",
-                  selected
-                    ? "border-primary bg-accent-soft/50 text-foreground ring-1 ring-primary"
-                    : "border-border bg-card text-muted-foreground hover:bg-muted",
-                )}
-              >
-                <CategoryIcon category={c} className="size-9" iconClassName="size-[18px]" />
-                <span className="line-clamp-2 break-words">{c.name}</span>
-                {selected ? (
-                  <span className="absolute top-1.5 right-1.5 grid size-4 place-items-center rounded-full bg-primary text-primary-foreground">
-                    <Check className="size-3" strokeWidth={3} aria-hidden />
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
-      )}
-      {error ? (
-        <p id={fieldErrorId("tx-category")} role="alert" className="mt-1.5 text-xs font-medium text-expense">
-          {error}
-        </p>
-      ) : null}
-    </fieldset>
-  );
 }
 
 /** Formulário global de transação (RF03), aberto pelo "+" de qualquer tela ou ao tocar numa transação. */
@@ -315,7 +205,13 @@ export function TransactionSheet({
               control={form.control}
               name="amount"
               render={({ field }) => (
-                <AmountField value={field.value} onChange={field.onChange} type={type} error={errors.amount?.message} />
+                <AmountField
+                  id="tx-amount"
+                  value={field.value}
+                  onChange={field.onChange}
+                  tone={type}
+                  error={errors.amount?.message}
+                />
               )}
             />
 
@@ -338,6 +234,7 @@ export function TransactionSheet({
               name="categoryId"
               render={({ field }) => (
                 <CategoryPicker
+                  id="tx-category"
                   categories={typeCategories}
                   value={field.value}
                   onChange={(id) => field.onChange(id)}
