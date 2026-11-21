@@ -95,7 +95,7 @@ export function CategoriesView({ month, data }: { month: string; data: Record<Ca
         </HeaderIconButton>
       }
     >
-      <div className="grid gap-2 lg:grid-cols-[minmax(0,22rem)_auto] lg:items-center lg:justify-between">
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,22rem)_auto] lg:items-center lg:justify-between">
         <Segmented label="Tipo de categoria" value={tab} onChange={setTab} options={TABS} />
         <MonthSelector month={month} size="sm" />
       </div>
@@ -115,7 +115,7 @@ export function CategoriesView({ month, data }: { month: string; data: Record<Ca
           }
         />
       ) : (
-        <ul className="grid gap-2 lg:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2">
           {rows.map((row) => (
             <li key={row.key}>
               <CategoryRow

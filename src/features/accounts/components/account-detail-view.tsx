@@ -27,7 +27,7 @@ export function AccountDetailView({ account, children }: { account: Account; chi
         </HeaderIconButton>
       }
     >
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start">
         <AccountCard account={account} />
         <section className="rounded-2xl border border-border bg-card p-4 shadow-soft">
           <SectionHeader
