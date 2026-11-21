@@ -1,30 +1,43 @@
-import Link from "next/link";
+import { BottomNav } from "./bottom-nav";
+import { DesktopSidebar } from "./desktop-sidebar";
+import { MobileDrawer, type ShellUser } from "./mobile-drawer";
+import { ShellProvider } from "./shell-context";
 
-const NAV = [
-  { href: "/dashboard", label: "Resumo" },
-  { href: "/transactions", label: "Transações" },
-  { href: "/categories", label: "Categorias" },
-  { href: "/recurrences", label: "Recorrências" },
-  { href: "/import-export", label: "Importar/Exportar" },
-] as const;
+interface AppShellProps {
+  user: ShellUser;
+  children: React.ReactNode;
+  /** Painéis globais compostos pelo `app/` (ex.: formulário de transação aberto pelo botão "+"). */
+  overlays?: React.ReactNode;
+  unreadNotifications?: number;
+  initialHideValues?: boolean;
+}
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+/**
+ * Casca da área logada (mobile-first):
+ * - mobile: cabeçalho da página + menu lateral + barra inferior com botão "+";
+ * - `lg`+: barra lateral fixa com o menu completo.
+ */
+export function AppShell({ user, children, overlays, unreadNotifications, initialHideValues }: AppShellProps) {
   return (
-    <div className="min-h-dvh">
-      <header className="border-b">
-        <nav aria-label="Principal" className="mx-auto flex max-w-6xl flex-wrap gap-1 px-4 py-2">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="inline-flex min-h-11 items-center rounded-md px-3 text-sm hover:bg-accent focus-visible:outline-2"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
-    </div>
+    <ShellProvider
+      {...(unreadNotifications !== undefined ? { unreadNotifications } : {})}
+      {...(initialHideValues !== undefined ? { initialHideValues } : {})}
+    >
+      <a
+        href="#conteudo"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-card focus:px-4 focus:py-2"
+      >
+        Pular para o conteúdo
+      </a>
+      <DesktopSidebar user={user} />
+      <MobileDrawer user={user} />
+      <div className="min-h-dvh lg:pl-72">
+        <main id="conteudo" className="mx-auto w-full max-w-5xl px-5 pb-32 lg:px-10 lg:pb-12">
+          {children}
+        </main>
+      </div>
+      <BottomNav />
+      {overlays}
+    </ShellProvider>
   );
 }

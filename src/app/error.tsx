@@ -1,13 +1,23 @@
 "use client";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
-    <div role="alert" className="mx-auto max-w-md space-y-3 p-6">
-      <h2 className="text-lg font-semibold">Algo deu errado</h2>
-      <p className="text-sm text-muted-foreground">Não foi possível carregar esta página.</p>
-      {error.digest ? <p className="text-xs">Código: {error.digest}</p> : null}
-      <Button onClick={reset}>Tentar novamente</Button>
+    <div role="alert" className="flex min-h-[60dvh] items-center justify-center px-6">
+      <div className="max-w-md text-center">
+        <h2 className="text-xl font-bold tracking-tight text-foreground">Esta página não carregou</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Algo deu errado do nosso lado. Tente de novo ou volte ao início.
+        </p>
+        {error.digest ? <p className="mt-2 text-xs text-muted-foreground">Código: {error.digest}</p> : null}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <Button onClick={reset}>Tentar novamente</Button>
+          <Link href="/dashboard" className={buttonVariants({ variant: "outline" })}>
+            Voltar ao início
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

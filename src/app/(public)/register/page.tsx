@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
-import { PageSection } from "@/components/layout/page-section";
+import { AuthShell } from "@/components/layout/auth-shell";
 
 export const metadata: Metadata = { title: "Criar conta" };
 
-// RF01: o formulário de cadastro (Better Auth client) será implementado em features/auth.
+// RF01: o formulário de cadastro (Better Auth client) será implementado em features/auth (Lote 1).
 export default function RegisterPage() {
   return (
-    <main className="mx-auto max-w-sm px-4 py-10">
-      <PageSection title="Criar conta">
-        <p className="text-sm text-muted-foreground">Formulário de cadastro em construção.</p>
-      </PageSection>
-    </main>
+    <AuthShell back title="Crie sua conta" subtitle="Leva menos de um minuto.">
+      <p className="text-sm text-muted-foreground">Formulário de cadastro em construção.</p>
+    </AuthShell>
   );
 }

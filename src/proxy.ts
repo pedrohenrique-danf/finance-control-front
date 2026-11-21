@@ -1,15 +1,25 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
 
-const PRIVATE = ["/dashboard", "/transactions", "/categories", "/recurrences", "/import-export"];
-const AUTH_PAGES = ["/login", "/register"];
+const PRIVATE = [
+  "/dashboard",
+  "/transactions",
+  "/categories",
+  "/recurrences",
+  "/accounts",
+  "/import-export",
+  "/notifications",
+  "/profile",
+];
+// /reset-password fica fora: o link do e-mail deve abrir mesmo com uma sessão ativa.
+const AUTH_PAGES = ["/login", "/register", "/forgot-password"];
 
 /** Verificação OTIMISTA (presença do cookie). A verificação autoritativa é requireSession() no layout privado. */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hasSessionCookie = Boolean(getSessionCookie(request));
 
-  if (PRIVATE.some((p) => pathname.startsWith(p)) && !hasSessionCookie) {
+  if (PRIVATE.some((p) => pathname === p || pathname.startsWith(`${p}/`)) && !hasSessionCookie) {
     const url = new URL("/login", request.url);
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
@@ -26,8 +36,12 @@ export const config = {
     "/transactions/:path*",
     "/categories/:path*",
     "/recurrences/:path*",
+    "/accounts/:path*",
     "/import-export/:path*",
+    "/notifications/:path*",
+    "/profile/:path*",
     "/login",
     "/register",
+    "/forgot-password",
   ],
 };
