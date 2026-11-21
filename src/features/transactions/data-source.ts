@@ -22,6 +22,8 @@ export interface Statement {
 
 export interface TransactionsDataSource {
   statement(filters: TransactionFilters, upToPage: number): Promise<Statement>;
+  /** Últimas transações do mês (início). */
+  latest(month: string, limit: number): Promise<Transaction[]>;
   /** Últimas transações de uma conta (detalhe da conta). */
   byAccount(accountId: string, limit: number): Promise<Transaction[]>;
   get(id: string): Promise<Transaction | null>;
@@ -71,6 +73,11 @@ const mockDataSource: TransactionsDataSource = {
       summary: last.meta.summary,
       dayTotals: last.meta.dayTotals,
     };
+  },
+
+  async latest(month, limit) {
+    const { user } = await requireSession();
+    return transactionPageSchema.parse(mockTransactions.list(user.id, { month, page: 1, pageSize: limit })).data;
   },
 
   async byAccount(accountId, limit) {

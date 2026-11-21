@@ -1,6 +1,6 @@
 import "server-only";
 import { requireSession } from "@/lib/auth/session";
-import { mockCategories } from "@/lib/mock-backend";
+import { mockCategories, mockDashboard } from "@/lib/mock-backend";
 import {
   type Category,
   type CategoryFormValues,
@@ -36,7 +36,7 @@ const mockDataSource: CategoriesDataSource = {
   async listWithTotals(month) {
     const { user } = await requireSession();
     const categories = categoryListSchema.parse({ data: mockCategories.list(user.id) }).data;
-    const totals = categoryTotalsSchema.parse({ data: mockCategories.monthlyTotals(user.id, month) }).data;
+    const totals = categoryTotalsSchema.parse({ data: mockDashboard.summary(user.id, month).byCategory }).data;
     const totalOf = (type: CategoryType, categoryId: string | null) =>
       totals.find((t) => t.type === type && t.categoryId === categoryId)?.total ?? "0.00";
     const byType = (type: CategoryType): CategoryTotalsByType => ({

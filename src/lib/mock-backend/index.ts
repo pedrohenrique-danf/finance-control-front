@@ -2,6 +2,7 @@
 // finance-control-back não expõe as rotas de domínio.
 // TODO(back): ao implementar cada rota, troque o data source da feature para getApi() e apague o módulo daqui.
 export { mockCategories } from "./categories";
+export { type DashboardSummaryRecord, dueDateIn, mockDashboard } from "./dashboard";
 export { fromCents, toCents } from "./money";
 export {
   mockTransactions,

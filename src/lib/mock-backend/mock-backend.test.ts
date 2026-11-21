@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { mockCategories, mockValueSources, mockTransactions, fromCents, toCents } = await import("./index");
+const { mockCategories, mockDashboard, mockValueSources, mockTransactions, fromCents, toCents } = await import(
+  "./index"
+);
 const { buildDemoData } = await import("./seed");
 const { userData } = await import("./store");
 
@@ -78,7 +80,7 @@ describe("categorias simuladas", () => {
   it("totais do mês somam por tipo e categoria", () => {
     const data = userData(userId);
     const month = data.transactions[0]?.date.slice(0, 7) ?? "";
-    const totals = mockCategories.monthlyTotals(userId, month);
+    const totals = mockDashboard.summary(userId, month).byCategory;
     const expected = data.transactions
       .filter((t) => t.date.startsWith(month) && t.type === "despesa")
       .reduce((acc, t) => acc + toCents(t.amount), 0);
@@ -230,5 +232,36 @@ describe("transações simuladas", () => {
     expect(byPeriod.data.map((t) => t.id)).toEqual([created.id]);
     mockTransactions.remove(userId, created.id);
     expect(() => mockTransactions.remove(userId, created.id)).toThrowError(expect.objectContaining({ status: 404 }));
+  });
+});
+
+describe("resumo do dashboard simulado", () => {
+  const now = new Date(2026, 10, 21);
+  const userWithSeed = () => {
+    const id = crypto.randomUUID();
+    const data = userData(id);
+    Object.assign(data, buildDemoData(now));
+    return { id, data };
+  };
+
+  it("saldo do mês só com efetivadas; previsto com pendentes", () => {
+    const { id, data } = userWithSeed();
+    const s = mockDashboard.summary(id, "2026-11", now);
+    const month = data.transactions.filter((t) => t.date.startsWith("2026-11"));
+    const sum = (f: (t: (typeof month)[number]) => boolean) =>
+      fromCents(month.filter(f).reduce((acc, t) => acc + toCents(t.amount), 0));
+    expect(s.paidIncome).toBe(sum((t) => t.type === "receita" && t.status === "efetivada"));
+    expect(s.balance).toBe(fromCents(toCents(s.paidIncome) - toCents(s.paidExpenses)));
+    expect(s.forecast).toBe(fromCents(toCents(s.income) - toCents(s.fixedExpenses) - toCents(s.variableExpenses)));
+    expect(s.history.map((h) => h.month)).toEqual(["2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11"]);
+  });
+
+  it("próximas fixas: só a partir de hoje, não efetivadas, ordenadas e no máximo 3", () => {
+    const { id } = userWithSeed();
+    const s = mockDashboard.summary(id, "2026-11", now);
+    expect(s.upcoming.length).toBeLessThanOrEqual(3);
+    expect(s.upcoming.every((u) => u.dueDate >= "2026-11-21")).toBe(true);
+    expect(s.upcoming.map((u) => u.dueDate)).toEqual([...s.upcoming.map((u) => u.dueDate)].sort());
+    expect(s.upcoming[0]).toMatchObject({ description: "Streaming", dueDate: "2026-11-22" });
   });
 });

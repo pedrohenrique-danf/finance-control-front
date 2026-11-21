@@ -1,7 +1,6 @@
 import "server-only";
-import { fromCents, toCents } from "./money";
 import { conflict, notFound, userData } from "./store";
-import type { CategoryRecord, TransactionType } from "./types";
+import type { CategoryRecord } from "./types";
 
 // Simula: GET/POST /api/v1/categories, PUT/DELETE /api/v1/categories/:id (finance-control-back docs/02).
 
@@ -46,21 +45,5 @@ export const mockCategories = {
     data.categories = data.categories.filter((c) => c.id !== id);
     for (const t of data.transactions) if (t.categoryId === id) t.categoryId = null;
     for (const r of data.recurrences) if (r.categoryId === id) r.categoryId = null;
-  },
-
-  /** Total lançado por tipo e categoria no mês (todas as situações). categoryId null = "Sem categoria". */
-  monthlyTotals(
-    userId: string,
-    month: string,
-  ): Array<{ type: TransactionType; categoryId: string | null; total: string }> {
-    const totals = new Map<string, { type: TransactionType; categoryId: string | null; cents: number }>();
-    for (const t of userData(userId).transactions) {
-      if (!t.date.startsWith(month)) continue;
-      const key = `${t.type}:${t.categoryId ?? ""}`;
-      const entry = totals.get(key) ?? { type: t.type, categoryId: t.categoryId, cents: 0 };
-      entry.cents += toCents(t.amount);
-      totals.set(key, entry);
-    }
-    return [...totals.values()].map(({ type, categoryId, cents }) => ({ type, categoryId, total: fromCents(cents) }));
   },
 };

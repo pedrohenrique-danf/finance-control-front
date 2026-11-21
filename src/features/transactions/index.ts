@@ -1,4 +1,5 @@
 export { AccountTransactions } from "./components/account-transactions";
+export { LatestTransactions } from "./components/latest-transactions";
 export { StatementView } from "./components/statement-view";
 export { TransactionSheet } from "./components/transaction-sheet";
 export { transactionsDataSource } from "./data-source";
