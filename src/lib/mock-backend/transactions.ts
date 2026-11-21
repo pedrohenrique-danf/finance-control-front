@@ -1,6 +1,7 @@
 import "server-only";
 import { ApiError } from "@/lib/api/errors";
 import { fromCents, toCents } from "./money";
+import { notify, notifyTransaction } from "./notifications";
 import { insertRecurrence, materialize } from "./recurrences";
 import { notFound, userData } from "./store";
 import type { TransactionNature, TransactionRecord, TransactionStatus, TransactionType, UserData } from "./types";
@@ -139,6 +140,7 @@ export const mockTransactions = {
     if (!repeatMonthly) {
       const created: TransactionRecord = { id: crypto.randomUUID(), origin: "manual", recurrenceId: null, ...input };
       data.transactions.push(created);
+      notifyTransaction(data, created);
       return created;
     }
     const recurrence = insertRecurrence(data, {
@@ -160,6 +162,13 @@ export const mockTransactions = {
     };
     data.transactions.push(created);
     materialize(data, recurrence, now);
+    notifyTransaction(data, created);
+    notify(data, {
+      type: "sistema",
+      title: "Despesa fixa criada",
+      message: `${recurrence.description} · todo dia ${recurrence.dueDay}`,
+      recurrenceId: recurrence.id,
+    });
     return created;
   },
 

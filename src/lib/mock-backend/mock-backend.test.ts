@@ -2,8 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { mockCategories, mockDashboard, mockRecurrences, mockValueSources, mockTransactions, fromCents, toCents } =
-  await import("./index");
+const {
+  mockCategories,
+  mockDashboard,
+  mockNotifications,
+  mockRecurrences,
+  mockValueSources,
+  mockTransactions,
+  fromCents,
+  toCents,
+} = await import("./index");
 const { buildDemoData } = await import("./seed");
 const { userData } = await import("./store");
 
@@ -357,5 +365,44 @@ describe("recorrências simuladas (RF04)", () => {
       ["2026-10-15", "efetivada"],
       ["2026-11-15", "pendente"],
     ]);
+  });
+});
+
+describe("notificações geradas pelas ações", () => {
+  it("criar categoria, conta, transação e despesa fixa gera avisos; marcar como lida zera o contador", () => {
+    const id = crypto.randomUUID();
+    const data = userData(id);
+    expect(mockNotifications.unreadCount(id)).toBe(0);
+    const category = mockCategories.create(id, { name: "Pets", type: "despesa", color: "#636851", icon: "paw" });
+    mockValueSources.create(id, {
+      name: "Inter",
+      type: "conta_corrente",
+      institution: null,
+      initialBalance: "0.00",
+      active: true,
+    });
+    const tx = mockTransactions.create(id, {
+      type: "despesa",
+      nature: "variavel",
+      description: "Ração",
+      amount: "89.90",
+      date: "2026-11-21",
+      status: "efetivada",
+      categoryId: category.id,
+      valueSourceId: data.valueSources[0]?.id ?? null,
+    });
+    const page = mockNotifications.list(id, 1, 10);
+    expect(page.meta).toMatchObject({ total: 3, unread: 3 });
+    expect(page.data.map((n) => n.title).sort()).toEqual(["Categoria criada", "Conta criada", "Despesa registrada"]);
+    const txNotification = page.data.find((n) => n.transactionId === tx.id);
+    expect(txNotification?.message).toBe("Ração · R$ 89,90 em 21/11/2026");
+
+    mockNotifications.markRead(id, txNotification?.id ?? "");
+    expect(mockNotifications.unreadCount(id)).toBe(2);
+    mockNotifications.markAllRead(id);
+    expect(mockNotifications.unreadCount(id)).toBe(0);
+    expect(() => mockNotifications.markRead(id, crypto.randomUUID())).toThrowError(
+      expect.objectContaining({ status: 404 }),
+    );
   });
 });

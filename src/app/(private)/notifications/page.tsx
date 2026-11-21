@@ -1,14 +1,10 @@
 import type { Metadata } from "next";
-import { EmptyState } from "@/components/common/empty-state";
-import { PageSection } from "@/components/layout/page-section";
+import { NotificationsView, notificationsDataSource } from "@/features/notifications";
 
 export const metadata: Metadata = { title: "Notificações" };
 
-// Avisos e preferências de notificação (features/notifications).
-export default function NotificationsPage() {
-  return (
-    <PageSection title="Notificações">
-      <EmptyState art="bell" title="Em construção" description="Esta tela será migrada nos próximos lotes." />
-    </PageSection>
-  );
+/** Últimas 50 notificações (geradas pelas ações do usuário). */
+export default async function NotificationsPage() {
+  const { data, meta } = await notificationsDataSource.list(1, 50);
+  return <NotificationsView notifications={data} unread={meta.unread} />;
 }

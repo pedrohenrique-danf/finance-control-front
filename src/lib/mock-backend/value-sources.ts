@@ -1,5 +1,6 @@
 import "server-only";
 import { fromCents, toCents } from "./money";
+import { notify } from "./notifications";
 import { conflict, notFound, userData } from "./store";
 import type { TransactionRecord, ValueSourceRecord } from "./types";
 
@@ -43,6 +44,7 @@ export const mockValueSources = {
     assertUniqueName(data.valueSources, input.name);
     const created = { id: crypto.randomUUID(), ...input };
     data.valueSources.push(created);
+    notify(data, { type: "sistema", title: "Conta criada", message: created.name });
     return withBalance(created, data.transactions);
   },
 

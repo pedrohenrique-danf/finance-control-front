@@ -53,9 +53,48 @@ export interface RecurrenceRecord {
   valueSourceId: string | null;
 }
 
+export type NotificationType =
+  | "lembrete_registro"
+  | "vencimento_despesa"
+  | "importacao_concluida"
+  | "exportacao_pronta"
+  | "sistema";
+
+export interface NotificationRecord {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  /** Canal app: criada como "enviada" e marcada como "lida" pelo usuário. */
+  status: "enviada" | "lida";
+  createdAt: string;
+  readAt: string | null;
+  transactionId: string | null;
+  recurrenceId: string | null;
+}
+
+export interface DataOperationRecord {
+  id: string;
+  type: "importacao" | "exportacao";
+  format: "csv" | "xlsx" | "pdf";
+  status: "concluida" | "concluida_com_erros" | "falhou";
+  fileName: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  totalRows: number;
+  successRows: number;
+  errorRows: number;
+  errorMessage: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  errors: Array<{ line: number; field: string | null; message: string; content: string | null }>;
+}
+
 export interface UserData {
   categories: CategoryRecord[];
   valueSources: ValueSourceRecord[];
   transactions: TransactionRecord[];
   recurrences: RecurrenceRecord[];
+  notifications: NotificationRecord[];
+  dataOperations: DataOperationRecord[];
 }

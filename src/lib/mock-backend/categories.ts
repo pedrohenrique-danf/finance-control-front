@@ -1,4 +1,5 @@
 import "server-only";
+import { notify } from "./notifications";
 import { conflict, notFound, userData } from "./store";
 import type { CategoryRecord } from "./types";
 
@@ -26,6 +27,11 @@ export const mockCategories = {
     assertUniqueName(data.categories, input);
     const created = { id: crypto.randomUUID(), ...input };
     data.categories.push(created);
+    notify(data, {
+      type: "sistema",
+      title: "Categoria criada",
+      message: `${created.name} (${created.type === "receita" ? "receita" : "despesa"})`,
+    });
     return created;
   },
 

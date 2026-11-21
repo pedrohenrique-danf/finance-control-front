@@ -16,6 +16,9 @@ export function userData(userId: string): UserData {
     data = buildDemoData();
     users.set(userId, data);
   }
+  // Usuários criados antes de notificações/histórico existirem (hot reload do next dev).
+  data.notifications ??= [];
+  data.dataOperations ??= [];
   return data;
 }
 

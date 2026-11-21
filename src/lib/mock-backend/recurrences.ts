@@ -1,6 +1,7 @@
 import "server-only";
 import { ApiError } from "@/lib/api/errors";
 import { currentMonth, shiftMonth } from "@/lib/format/date";
+import { notify } from "./notifications";
 import { notFound, userData } from "./store";
 import type { RecurrenceRecord, TransactionStatus, UserData } from "./types";
 
@@ -128,6 +129,12 @@ export const mockRecurrences = {
     const data = userData(userId);
     const created = insertRecurrence(data, input);
     materialize(data, created, now);
+    notify(data, {
+      type: "sistema",
+      title: created.type === "receita" ? "Receita fixa criada" : "Despesa fixa criada",
+      message: `${created.description} · todo dia ${created.dueDay}`,
+      recurrenceId: created.id,
+    });
     return created;
   },
 

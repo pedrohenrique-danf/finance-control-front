@@ -243,5 +243,5 @@ export function buildDemoData(now = new Date()): UserData {
     }
   }
 
-  return { categories, valueSources, transactions, recurrences };
+  return { categories, valueSources, transactions, recurrences, notifications: [], dataOperations: [] };
 }

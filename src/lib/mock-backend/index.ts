@@ -4,6 +4,7 @@
 export { mockCategories } from "./categories";
 export { type DashboardSummaryRecord, mockDashboard } from "./dashboard";
 export { fromCents, toCents } from "./money";
+export { mockNotifications, type NotificationPage } from "./notifications";
 export {
   mockRecurrences,
   type RecurrenceCreateInput,
