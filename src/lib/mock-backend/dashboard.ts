@@ -1,8 +1,9 @@
 import "server-only";
 import { currentMonth, shiftMonth, todayIso } from "@/lib/format/date";
 import { fromCents, toCents } from "./money";
+import { covers, dueDateIn } from "./recurrences";
 import { userData } from "./store";
-import type { RecurrenceRecord, TransactionRecord, TransactionType } from "./types";
+import type { TransactionRecord, TransactionType } from "./types";
 
 // Simula: GET /api/v1/dashboard/summary?month=YYYY-MM (backend docs/02, "Resumo do dashboard").
 
@@ -28,20 +29,6 @@ export interface DashboardSummaryRecord {
 
 const HISTORY_MONTHS = 6;
 const UPCOMING_LIMIT = 3;
-
-function daysInMonth(month: string): number {
-  const [y, m] = month.split("-").map(Number) as [number, number];
-  return new Date(y, m, 0).getDate();
-}
-
-/** Vencimento da recorrência no mês (dia 31 vira o último dia do mês). */
-export function dueDateIn(rec: Pick<RecurrenceRecord, "dueDay">, month: string): string {
-  return `${month}-${String(Math.min(rec.dueDay, daysInMonth(month))).padStart(2, "0")}`;
-}
-
-function covers(rec: RecurrenceRecord, date: string): boolean {
-  return rec.startDate <= date && (rec.endDate === null || date <= rec.endDate);
-}
 
 function monthTotals(transactions: TransactionRecord[], month: string) {
   let income = 0;

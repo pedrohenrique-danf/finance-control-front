@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/auth/session";
 import { mockTransactions, type TransactionQuery } from "@/lib/mock-backend";
 import { PAGE_SIZE, quickToQuery, type TransactionFilters } from "./filters";
 import {
+  type RepeatMonthly,
   type Transaction,
   type TransactionInput,
   type TransactionPage,
@@ -27,7 +28,7 @@ export interface TransactionsDataSource {
   /** Últimas transações de uma conta (detalhe da conta). */
   byAccount(accountId: string, limit: number): Promise<Transaction[]>;
   get(id: string): Promise<Transaction | null>;
-  create(input: TransactionInput): Promise<Transaction>;
+  create(input: TransactionInput, repeatMonthly?: RepeatMonthly): Promise<Transaction>;
   update(id: string, input: TransactionInput): Promise<Transaction>;
   remove(id: string): Promise<void>;
 }
@@ -52,7 +53,7 @@ function toQuery(filters: TransactionFilters, page: number, pageSize = PAGE_SIZE
 //   página   → api.get("/api/v1/transactions", transactionPageSchema, { month, from, to, q, type, nature,
 //                status, categoryIds: csv, valueSourceIds: csv, page, pageSize })  (backend docs/07)
 //   obter    → api.get(`/api/v1/transactions/${id}`, transactionSchema)
-//   criar    → api.post("/api/v1/transactions", input, transactionSchema)
+//   criar    → api.post("/api/v1/transactions", { ...input, repeatMonthly }, transactionSchema)
 //   editar   → api.put(`/api/v1/transactions/${id}`, input, transactionSchema)
 //   excluir  → api.delete(`/api/v1/transactions/${id}`)
 const mockDataSource: TransactionsDataSource = {
@@ -96,9 +97,9 @@ const mockDataSource: TransactionsDataSource = {
     }
   },
 
-  async create(input) {
+  async create(input, repeatMonthly) {
     const { user } = await requireSession();
-    return transactionSchema.parse(mockTransactions.create(user.id, input));
+    return transactionSchema.parse(mockTransactions.create(user.id, input, repeatMonthly ?? undefined));
   },
 
   async update(id, input) {

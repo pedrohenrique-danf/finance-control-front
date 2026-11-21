@@ -10,6 +10,7 @@ import {
 } from "./filters";
 import {
   type Transaction,
+  toRepeatMonthly,
   toTransactionFormValues,
   toTransactionInput,
   transactionFormSchema,
@@ -93,7 +94,29 @@ describe("formulário de transação ↔ contrato", () => {
     valueSourceId: ACC,
     nature: "fixa" as const,
     status: "pendente" as const,
+    repeat: false,
+    dueDay: 15,
+    endDate: "",
   };
+
+  it("repetir todo mês: força despesa fixa e envia dia e data final", () => {
+    const values = transactionFormSchema.parse({
+      ...form,
+      nature: "variavel",
+      repeat: true,
+      dueDay: 31,
+      endDate: "2027-06-30",
+    });
+    expect(toTransactionInput(values).nature).toBe("fixa");
+    expect(toRepeatMonthly(values)).toEqual({ dueDay: 31, endDate: "2027-06-30" });
+    expect(toRepeatMonthly({ ...values, endDate: "" })).toEqual({ dueDay: 31, endDate: null });
+    expect(toRepeatMonthly({ ...values, repeat: false })).toBeNull();
+  });
+
+  it("repetir todo mês: data final antes da transação é rejeitada", () => {
+    const result = transactionFormSchema.safeParse({ ...form, repeat: true, endDate: "2026-10-01" });
+    expect(result.error?.issues[0]?.path).toEqual(["endDate"]);
+  });
 
   it("despesa leva natureza; receita nunca leva", () => {
     const expense = toTransactionInput(transactionFormSchema.parse(form));

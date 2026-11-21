@@ -81,27 +81,56 @@ export const transactionInputSchema = z
   .refine((v) => Number(v.amount) > 0, { path: ["amount"], message: "Informe um valor maior que zero." });
 export type TransactionInput = z.output<typeof transactionInputSchema>;
 
+/** `repeatMonthly` do POST /transactions: cria a recorrência junto (backend docs/07, "Repetir todo mês"). */
+export const repeatMonthlySchema = z
+  .object({ dueDay: z.number().int().min(1).max(31), endDate: isoDate.nullable() })
+  .nullable();
+export type RepeatMonthly = z.output<typeof repeatMonthlySchema>;
+
 /** Formulário (UX): categoria e conta obrigatórias; natureza ignorada em receitas. */
-export const transactionFormSchema = z.object({
-  type: z.enum(transactionTypes),
-  amount: z.string().refine((v) => Number(v) > 0, "Informe um valor maior que zero."),
-  description: z
-    .string()
-    .trim()
-    .min(1, "Descreva a transação.")
-    .max(DESCRIPTION_MAX, `Use no máximo ${DESCRIPTION_MAX} caracteres.`),
-  date: z.string().min(1, "Escolha uma data.").pipe(isoDate),
-  categoryId: z.string().min(1, "Escolha uma categoria."),
-  valueSourceId: z.string().min(1, "Escolha uma conta ou cartão."),
-  nature: z.enum(transactionNatures),
-  status: z.enum(transactionStatuses),
-});
+export const transactionFormSchema = z
+  .object({
+    type: z.enum(transactionTypes),
+    amount: z.string().refine((v) => Number(v) > 0, "Informe um valor maior que zero."),
+    description: z
+      .string()
+      .trim()
+      .min(1, "Descreva a transação.")
+      .max(DESCRIPTION_MAX, `Use no máximo ${DESCRIPTION_MAX} caracteres.`),
+    date: z.string().min(1, "Escolha uma data.").pipe(isoDate),
+    categoryId: z.string().min(1, "Escolha uma categoria."),
+    valueSourceId: z.string().min(1, "Escolha uma conta ou cartão."),
+    nature: z.enum(transactionNatures),
+    status: z.enum(transactionStatuses),
+    /** "Repetir todo mês" (só na criação). */
+    repeat: z.boolean(),
+    dueDay: z
+      .number({ error: "Informe o dia." })
+      .int("Use um dia inteiro.")
+      .min(1, "Dia entre 1 e 31.")
+      .max(31, "Dia entre 1 e 31."),
+    endDate: z.string(),
+  })
+  .refine((v) => !v.repeat || v.endDate === "" || v.endDate >= v.date, {
+    path: ["endDate"],
+    message: "A data final deve ser depois da data da transação.",
+  });
 export type TransactionFormValues = z.output<typeof transactionFormSchema>;
+
+export function toRepeatMonthly(values: TransactionFormValues): RepeatMonthly {
+  return values.repeat ? { dueDay: values.dueDay, endDate: values.endDate || null } : null;
+}
+
+/** Dia do mês de uma data ISO ("2026-11-21" → 21). */
+export function dayOf(iso: string): number {
+  return Number(iso.slice(8, 10)) || 1;
+}
 
 export function toTransactionInput(values: TransactionFormValues): TransactionInput {
   return {
     type: values.type,
-    nature: values.type === "despesa" ? values.nature : null,
+    // Repetir todo mês torna a despesa fixa (a ocorrência é de uma recorrência).
+    nature: values.type === "despesa" ? (values.repeat ? "fixa" : values.nature) : null,
     description: values.description,
     amount: values.amount,
     date: values.date,
@@ -127,5 +156,8 @@ export function toTransactionFormValues(
     valueSourceId: accounts.some((a) => a.id === t.valueSourceId) ? (t.valueSourceId ?? "") : "",
     nature: t.nature ?? "variavel",
     status: t.status,
+    repeat: false,
+    dueDay: dayOf(t.date),
+    endDate: "",
   };
 }

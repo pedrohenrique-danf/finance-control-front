@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { type ActionResult, toActionResult, validationFailure } from "@/lib/actions/action-result";
 import { transactionsDataSource } from "./data-source";
-import { type Transaction, transactionInputSchema } from "./schemas";
+import { repeatMonthlySchema, type Transaction, transactionInputSchema } from "./schemas";
 
 /** Transações mexem em extrato, início, categorias e saldos das contas. */
 function revalidate() {
@@ -20,10 +20,16 @@ export async function getTransactionAction(id: string): Promise<ActionResult<Tra
   return { ok: true, data: transaction };
 }
 
-export async function createTransactionAction(input: unknown): Promise<ActionResult<Transaction>> {
+/** `repeatMonthly` (opcional) cria a despesa fixa junto com a transação ("Repetir todo mês"). */
+export async function createTransactionAction(
+  input: unknown,
+  repeatMonthly: unknown = null,
+): Promise<ActionResult<Transaction>> {
   const parsed = transactionInputSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
-  const result = await toActionResult(() => transactionsDataSource.create(parsed.data));
+  const repeat = repeatMonthlySchema.safeParse(repeatMonthly);
+  if (!repeat.success) return validationFailure(repeat.error);
+  const result = await toActionResult(() => transactionsDataSource.create(parsed.data, repeat.data));
   if (result.ok) revalidate();
   return result;
 }

@@ -16,6 +16,7 @@ import { useShell } from "@/components/layout/shell-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { todayIso } from "@/lib/format/date";
 import { applyActionError } from "@/lib/forms/apply-action-error";
 import { cn } from "@/lib/utils";
@@ -29,15 +30,28 @@ import {
   type AccountOption,
   type CategoryOption,
   DESCRIPTION_MAX,
+  dayOf,
   type Transaction,
   type TransactionFormValues,
   type TransactionType,
+  toRepeatMonthly,
   toTransactionFormValues,
   toTransactionInput,
   transactionFormSchema,
 } from "../schemas";
 
-const FIELDS = ["type", "amount", "description", "date", "categoryId", "valueSourceId", "nature", "status"] as const;
+const FIELDS = [
+  "type",
+  "amount",
+  "description",
+  "date",
+  "categoryId",
+  "valueSourceId",
+  "nature",
+  "status",
+  "dueDay",
+  "endDate",
+] as const;
 const TYPE_OPTIONS = [
   { value: "despesa", label: "Despesa", activeClassName: "bg-expense text-primary-foreground shadow-soft" },
   { value: "receita", label: "Receita", activeClassName: "bg-income text-primary-foreground shadow-soft" },
@@ -57,6 +71,9 @@ function emptyValues(type: TransactionType, accountId: string): TransactionFormV
     valueSourceId: accountId,
     nature: "variavel",
     status: "efetivada",
+    repeat: false,
+    dueDay: dayOf(todayIso()),
+    endDate: "",
   };
 }
 
@@ -82,7 +99,7 @@ export function TransactionSheet({
     defaultValues: emptyValues("despesa", firstActive),
   });
   const { errors, isSubmitting } = form.formState;
-  const type = useWatch({ control: form.control, name: "type" });
+  const [type, repeat] = useWatch({ control: form.control, name: ["type", "repeat"] });
 
   // Ao abrir: nova transação → valores padrão; edição → busca a transação no servidor.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reinicia só quando o painel abre ou muda o alvo
@@ -117,9 +134,13 @@ export function TransactionSheet({
 
   async function onSubmit(values: TransactionFormValues) {
     const input = toTransactionInput(values);
-    const result = editing ? await updateTransactionAction(editing.id, input) : await createTransactionAction(input);
+    const result = editing
+      ? await updateTransactionAction(editing.id, input)
+      : await createTransactionAction(input, toRepeatMonthly(values));
     if (!result.ok) return applyActionError(form.setError, result.error, FIELDS);
-    toast.success(editing ? "Transação atualizada." : "Transação salva.");
+    toast.success(editing ? "Transação atualizada." : "Transação salva.", {
+      description: !editing && values.repeat ? "A recorrência mensal também foi criada." : undefined,
+    });
     closeTransaction();
   }
 
@@ -283,8 +304,10 @@ export function TransactionSheet({
                     render={({ field }) => (
                       <Segmented
                         label="Natureza"
-                        value={field.value}
-                        onChange={field.onChange}
+                        value={repeat ? "fixa" : field.value}
+                        onChange={(next) => {
+                          if (!repeat) field.onChange(next);
+                        }}
                         options={NATURE_OPTIONS}
                       />
                     )}
@@ -310,6 +333,50 @@ export function TransactionSheet({
                 />
               </div>
             </div>
+
+            {isEdit ? null : (
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <label htmlFor="tx-repeat" className="min-w-0 cursor-pointer">
+                    <span className="block text-sm font-semibold">Repetir todo mês</span>
+                    <span className="block text-xs text-muted-foreground">
+                      Cria uma {type === "receita" ? "receita" : "despesa"} fixa automática
+                    </span>
+                  </label>
+                  <Controller
+                    control={form.control}
+                    name="repeat"
+                    render={({ field }) => (
+                      <Switch
+                        id="tx-repeat"
+                        checked={field.value}
+                        onCheckedChange={(next) => {
+                          field.onChange(next);
+                          if (next) form.setValue("dueDay", dayOf(form.getValues("date")));
+                        }}
+                      />
+                    )}
+                  />
+                </div>
+                {repeat ? (
+                  <div className="mt-4 grid grid-cols-[96px_minmax(0,1fr)] gap-3">
+                    <Field label="Vence dia" htmlFor="tx-due-day" error={errors.dueDay?.message}>
+                      <Input
+                        {...fieldA11y("tx-due-day", errors.dueDay?.message)}
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={31}
+                        {...form.register("dueDay", { valueAsNumber: true })}
+                      />
+                    </Field>
+                    <Field label="Data final (opcional)" htmlFor="tx-end-date" error={errors.endDate?.message}>
+                      <DateInput {...fieldA11y("tx-end-date", errors.endDate?.message)} {...form.register("endDate")} />
+                    </Field>
+                  </div>
+                ) : null}
+              </div>
+            )}
 
             {editing?.origin === "recorrencia" ? (
               <p className="rounded-2xl bg-accent-soft/50 p-3 text-xs text-muted-foreground">

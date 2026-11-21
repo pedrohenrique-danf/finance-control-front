@@ -1,6 +1,7 @@
 import "server-only";
 import { ApiError } from "@/lib/api/errors";
 import { fromCents, toCents } from "./money";
+import { insertRecurrence, materialize } from "./recurrences";
 import { notFound, userData } from "./store";
 import type { TransactionNature, TransactionRecord, TransactionStatus, TransactionType, UserData } from "./types";
 
@@ -123,11 +124,42 @@ export const mockTransactions = {
     return found;
   },
 
-  create(userId: string, input: TransactionInput): TransactionRecord {
+  /**
+   * POST /transactions. Com `repeatMonthly`, cria também a recorrência (startDate = data) e liga a transação a ela;
+   * as demais ocorrências até o mês corrente são materializadas sem duplicar a data lançada.
+   */
+  create(
+    userId: string,
+    input: TransactionInput,
+    repeatMonthly?: { dueDay: number; endDate: string | null },
+    now = new Date(),
+  ): TransactionRecord {
     const data = userData(userId);
     validate(data, input);
-    const created: TransactionRecord = { id: crypto.randomUUID(), origin: "manual", recurrenceId: null, ...input };
+    if (!repeatMonthly) {
+      const created: TransactionRecord = { id: crypto.randomUUID(), origin: "manual", recurrenceId: null, ...input };
+      data.transactions.push(created);
+      return created;
+    }
+    const recurrence = insertRecurrence(data, {
+      type: input.type,
+      description: input.description,
+      amount: input.amount,
+      dueDay: repeatMonthly.dueDay,
+      startDate: input.date,
+      endDate: repeatMonthly.endDate,
+      categoryId: input.categoryId,
+      valueSourceId: input.valueSourceId,
+    });
+    const created: TransactionRecord = {
+      id: crypto.randomUUID(),
+      ...input,
+      nature: input.type === "despesa" ? "fixa" : null,
+      origin: "recorrencia",
+      recurrenceId: recurrence.id,
+    };
     data.transactions.push(created);
+    materialize(data, recurrence, now);
     return created;
   },
 

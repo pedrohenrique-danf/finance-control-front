@@ -2,9 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { mockCategories, mockDashboard, mockValueSources, mockTransactions, fromCents, toCents } = await import(
-  "./index"
-);
+const { mockCategories, mockDashboard, mockRecurrences, mockValueSources, mockTransactions, fromCents, toCents } =
+  await import("./index");
 const { buildDemoData } = await import("./seed");
 const { userData } = await import("./store");
 
@@ -263,5 +262,100 @@ describe("resumo do dashboard simulado", () => {
     expect(s.upcoming.every((u) => u.dueDate >= "2026-11-21")).toBe(true);
     expect(s.upcoming.map((u) => u.dueDate)).toEqual([...s.upcoming.map((u) => u.dueDate)].sort());
     expect(s.upcoming[0]).toMatchObject({ description: "Streaming", dueDate: "2026-11-22" });
+  });
+});
+
+describe("recorrências simuladas (RF04)", () => {
+  const now = new Date(2026, 10, 21); // 21/11/2026
+  const setup = () => {
+    const id = crypto.randomUUID();
+    const data = userData(id);
+    const despesa = data.categories.find((c) => c.type === "despesa");
+    const conta = data.valueSources[0];
+    if (!despesa || !conta) throw new Error("seed incompleto");
+    const base = {
+      type: "despesa" as const,
+      description: "Plano de celular",
+      amount: "59.90",
+      dueDay: 31,
+      startDate: "2026-09-10",
+      endDate: null,
+      categoryId: despesa.id,
+      valueSourceId: conta.id,
+    };
+    return { id, data, base };
+  };
+
+  it("criar lança de startDate até o mês corrente, pendente, fixa e no último dia em meses curtos", () => {
+    const { id, data, base } = setup();
+    const rec = mockRecurrences.create(id, base, now);
+    const posted = data.transactions.filter((t) => t.recurrenceId === rec.id).map((t) => [t.date, t.status, t.nature]);
+    expect(posted).toEqual([
+      ["2026-09-30", "pendente", "fixa"],
+      ["2026-10-31", "pendente", "fixa"],
+      ["2026-11-30", "pendente", "fixa"],
+    ]);
+    // idempotente: reativar/editar não duplica
+    mockRecurrences.update(id, rec.id, { ...base, active: true }, now);
+    expect(data.transactions.filter((t) => t.recurrenceId === rec.id)).toHaveLength(3);
+  });
+
+  it("agenda de 6 meses: lançados com a situação da transação, futuros como prevista, respeitando a data final", () => {
+    const { id, base } = setup();
+    const rec = mockRecurrences.create(id, { ...base, endDate: "2027-02-28" }, now);
+    const { schedule } = mockRecurrences.get(id, rec.id, now);
+    expect(schedule.map((s) => [s.month, s.dueDate, s.status])).toEqual([
+      ["2026-11", "2026-11-30", "pendente"],
+      ["2026-12", "2026-12-31", "prevista"],
+      ["2027-01", "2027-01-31", "prevista"],
+      ["2027-02", "2027-02-28", "prevista"],
+    ]);
+  });
+
+  it("pausada não lança; encerrar mantém os lançamentos sem vínculo (RNF02)", () => {
+    const { id, data, base } = setup();
+    const rec = mockRecurrences.create(id, { ...base, startDate: "2026-11-01" }, now);
+    mockRecurrences.update(id, rec.id, { ...base, startDate: "2026-11-01", active: false }, now);
+    expect(mockRecurrences.get(id, rec.id, now).active).toBe(false);
+    const posted = data.transactions.filter((t) => t.recurrenceId === rec.id).map((t) => t.id);
+    mockRecurrences.remove(id, rec.id);
+    expect(data.transactions.filter((t) => posted.includes(t.id)).every((t) => t.recurrenceId === null)).toBe(true);
+    expect(() => mockRecurrences.get(id, rec.id, now)).toThrowError(expect.objectContaining({ status: 404 }));
+  });
+
+  it("categoria de outro tipo e fim antes do início dão 400 por campo", () => {
+    const { id, data, base } = setup();
+    const receita = data.categories.find((c) => c.type === "receita");
+    expect(() => mockRecurrences.create(id, { ...base, categoryId: receita?.id ?? null }, now)).toThrowError(
+      expect.objectContaining({ status: 400, details: [expect.objectContaining({ path: "categoryId" })] }),
+    );
+    expect(() => mockRecurrences.create(id, { ...base, endDate: "2026-01-01" }, now)).toThrowError(
+      expect.objectContaining({ details: [expect.objectContaining({ path: "endDate" })] }),
+    );
+  });
+
+  it("repetir todo mês ao lançar: liga a transação à nova recorrência sem duplicar a data", () => {
+    const { id, data, base } = setup();
+    const tx = mockTransactions.create(
+      id,
+      {
+        type: "despesa",
+        nature: "variavel",
+        description: "Academia nova",
+        amount: "99.00",
+        date: "2026-10-15",
+        status: "efetivada",
+        categoryId: base.categoryId,
+        valueSourceId: base.valueSourceId,
+      },
+      { dueDay: 15, endDate: null },
+      now,
+    );
+    expect(tx).toMatchObject({ origin: "recorrencia", nature: "fixa", status: "efetivada" });
+    const linked = data.transactions.filter((t) => t.recurrenceId === tx.recurrenceId);
+    expect(linked.map((t) => [t.date, t.status])).toEqual([
+      ["2026-10-15", "efetivada"],
+      ["2026-11-15", "pendente"],
+    ]);
   });
 });
