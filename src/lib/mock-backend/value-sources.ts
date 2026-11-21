@@ -3,7 +3,7 @@ import { fromCents, toCents } from "./money";
 import { conflict, notFound, userData } from "./store";
 import type { TransactionRecord, ValueSourceRecord } from "./types";
 
-// Simula as rotas de contas e cartões (tabela fontes_valor). As rotas ainda não estão no contrato do backend.
+// Simula: GET/POST /api/v1/value-sources, GET/PUT /api/v1/value-sources/:id (backend docs/02 e 07).
 
 type Input = Omit<ValueSourceRecord, "id">;
 export type ValueSourceWithBalance = ValueSourceRecord & { currentBalance: string };

@@ -26,7 +26,7 @@ export interface CategoriesDataSource {
 //   create → api.post("/api/v1/categories", input, categorySchema)
 //   update → api.put(`/api/v1/categories/${id}`, input, categorySchema)
 //   remove → api.delete(`/api/v1/categories/${id}`)
-//   totais do mês → [PENDENTE DE DEFINIÇÃO] rota no backend (ex.: incluir em /dashboard/summary?month=).
+//   totais do mês → api.get("/api/v1/dashboard/summary", …, { month }).byCategory  (backend docs/02)
 const mockDataSource: CategoriesDataSource = {
   async list() {
     const { user } = await requireSession();

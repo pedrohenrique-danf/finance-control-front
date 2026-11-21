@@ -47,13 +47,12 @@ function toQuery(filters: TransactionFilters, page: number, pageSize = PAGE_SIZE
 
 // TODO(back): as rotas de transações ainda não existem no finance-control-back. Ao implementá-las,
 // troque por getApi() mantendo o parse com os schemas:
-//   página   → api.get("/api/v1/transactions", transactionPageSchema, { month, page, pageSize, ...filtros })
+//   página   → api.get("/api/v1/transactions", transactionPageSchema, { month, from, to, q, type, nature,
+//                status, categoryIds: csv, valueSourceIds: csv, page, pageSize })  (backend docs/07)
 //   obter    → api.get(`/api/v1/transactions/${id}`, transactionSchema)
 //   criar    → api.post("/api/v1/transactions", input, transactionSchema)
 //   editar   → api.put(`/api/v1/transactions/${id}`, input, transactionSchema)
 //   excluir  → api.delete(`/api/v1/transactions/${id}`)
-// [PENDENTE DE DEFINIÇÃO] no contrato: filtros q/type/nature/status/categoryIds/valueSourceIds/from/to e
-// meta.summary/meta.dayTotals (totais do conjunto filtrado).
 const mockDataSource: TransactionsDataSource = {
   async statement(filters, upToPage) {
     const { user } = await requireSession();

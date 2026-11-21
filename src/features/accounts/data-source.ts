@@ -13,10 +13,12 @@ export interface AccountsDataSource {
   update(id: string, input: AccountInput): Promise<Account>;
 }
 
-// TODO(back): o contrato do finance-control-back (docs/02) ainda não tem rotas para fontes_valor.
-// Rota [PENDENTE DE DEFINIÇÃO]; sugestão no padrão REST do projeto: GET/POST /api/v1/value-sources e
-// GET/PUT /api/v1/value-sources/:id, devolvendo `currentBalance` calculado no backend.
-// Ao implementar, troque por getApi() mantendo o parse com accountListSchema/accountSchema.
+// TODO(back): as rotas de fontes_valor ainda não existem no finance-control-back (contrato: docs/02 e 07).
+// Ao implementá-las, troque por getApi() mantendo o parse com os schemas:
+//   list   → api.get("/api/v1/value-sources", accountListSchema)
+//   get    → api.get(`/api/v1/value-sources/${id}`, accountSchema)  (404 → null)
+//   create → api.post("/api/v1/value-sources", input, accountSchema)
+//   update → api.put(`/api/v1/value-sources/${id}`, input, accountSchema)
 const mockDataSource: AccountsDataSource = {
   async list() {
     const { user } = await requireSession();

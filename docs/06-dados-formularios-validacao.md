@@ -61,7 +61,7 @@ Transação com `categoryId: null` exibe o rótulo **"Sem categoria"** e mantém
 
 ### `status` da transação
 
-Valores permitidos: **[PENDENTE DE DEFINIÇÃO]** (definidos no backend). Não invente rótulos de status.
+Valores do banco (`transactionStatuses`): `"pendente"` e `"efetivada"` (padrão). Na tela: efetivada = **"Pago"** (despesa) ou **"Recebido"** (receita); pendente = **"Pendente"**. Contrato: backend docs/07 (`createTransactionSchema`).
 
 ## Exemplos de código
 
@@ -72,8 +72,8 @@ Valores permitidos: **[PENDENTE DE DEFINIÇÃO]** (definidos no backend). Não i
 // SYNC: finance-control-back/src/modules/transactions/transactions.schemas.ts
 import { z } from "zod";
 
-export const transactionTypes = ["income", "expense"] as const;
-export const transactionNatures = ["fixed", "variable"] as const;
+export const transactionTypes = ["receita", "despesa"] as const;
+export const transactionNatures = ["fixa", "variavel"] as const;
 
 export const transactionSchema = z.object({
   id: z.string().uuid(),
@@ -140,7 +140,7 @@ export const createTransactionFormSchema = z
     categoryId: z.string().uuid().nullable(),
   })
   .superRefine((v, ctx) => {
-    if (v.type === "expense" && !v.nature) {
+    if (v.type === "despesa" && !v.nature) {
       ctx.addIssue({ code: "custom", path: ["nature"], message: "Informe se a despesa é fixa ou variável." });
     }
   });
@@ -149,7 +149,7 @@ export type CreateTransactionFormValues = z.input<typeof createTransactionFormSc
 export function toCreateTransactionPayload(v: z.output<typeof createTransactionFormSchema>) {
   return {
     type: v.type,
-    nature: v.type === "expense" ? v.nature ?? null : null,
+    nature: v.type === "despesa" ? v.nature ?? null : null,
     description: v.description,
     amount: parseMoneyInput(v.amount)!,        // já validado pelo schema
     date: v.date,
@@ -171,7 +171,7 @@ import { createTransactionFormSchema, type CreateTransactionFormValues } from ".
 export function TransactionForm({ categories, onDone }: TransactionFormProps) {
   const form = useForm<CreateTransactionFormValues>({
     resolver: zodResolver(createTransactionFormSchema),
-    defaultValues: { type: "expense", description: "", amount: "", date: todayIso(), categoryId: null },
+    defaultValues: { type: "despesa", description: "", amount: "", date: todayIso(), categoryId: null },
   });
 
   async function onSubmit(values: CreateTransactionFormValues) {
@@ -206,9 +206,9 @@ const categoryName = tx.categoryId ? categoriesById.get(tx.categoryId)?.name ?? 
 ```ts
 it("converte valores do formulário para o contrato da API", () => {
   const values = createTransactionFormSchema.parse({
-    type: "expense", nature: "variable", description: "Compra", amount: "1.234,50", date: "2026-11-05", categoryId: null,
+    type: "despesa", nature: "variavel", description: "Compra", amount: "1.234,50", date: "2026-11-05", categoryId: null,
   });
-  expect(toCreateTransactionPayload(values)).toMatchObject({ amount: "1234.50", date: "2026-11-05", nature: "variable" });
+  expect(toCreateTransactionPayload(values)).toMatchObject({ amount: "1234.50", date: "2026-11-05", nature: "variavel" });
 });
 ```
 

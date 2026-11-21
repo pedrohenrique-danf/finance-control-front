@@ -2,8 +2,7 @@ import { z } from "zod";
 
 // SYNC: finance-control-back src/shared/enums.ts e src/db/schema/transactions.ts
 // (descrição ≤ 160, valor > 0, natureza só em despesas, status default "efetivada").
-// [PENDENTE DE DEFINIÇÃO] createTransactionSchema do backend (docs/07) ainda não aceita `status`
-// e usa "expense"/"income" na validação de natureza; aqui seguimos o banco.
+// Contrato: finance-control-back docs/07 (createTransactionSchema, listTransactionsQuerySchema).
 export const transactionTypes = ["receita", "despesa"] as const;
 export const transactionNatures = ["fixa", "variavel"] as const;
 export const transactionStatuses = ["pendente", "efetivada"] as const;

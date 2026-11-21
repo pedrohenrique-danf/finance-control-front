@@ -5,8 +5,7 @@ import { notFound, userData } from "./store";
 import type { TransactionNature, TransactionRecord, TransactionStatus, TransactionType, UserData } from "./types";
 
 // Simula: GET/POST /api/v1/transactions, GET/PUT/DELETE /api/v1/transactions/:id (finance-control-back docs/02).
-// Filtros além de month/page/pageSize e o `meta.summary`/`meta.dayTotals` ainda não estão no contrato
-// do backend: [PENDENTE DE DEFINIÇÃO].
+// Filtros e meta.summary/meta.dayTotals conforme listTransactionsQuerySchema (backend docs/07).
 
 export interface TransactionQuery {
   /** "YYYY-MM". Ignorado quando há `from` ou `to`. */
