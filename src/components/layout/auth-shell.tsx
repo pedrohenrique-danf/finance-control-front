@@ -25,7 +25,7 @@ function Leaf({ className }: { className: string }) {
  */
 export function AuthShell({ title, subtitle, back, footer, children }: AuthShellProps) {
   return (
-    <div className="min-h-dvh bg-background lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+    <main className="min-h-dvh bg-background lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div className="relative overflow-hidden rounded-b-[36px] bg-primary-dark px-6 pt-[max(3rem,env(safe-area-inset-top))] pb-9 text-primary-foreground lg:flex lg:flex-col lg:justify-between lg:rounded-none lg:px-14 lg:py-14">
         <Leaf className="pointer-events-none absolute -top-6 -right-10 size-48 text-primary-foreground/10 lg:size-[28rem]" />
         <div className="relative">
@@ -54,6 +54,6 @@ export function AuthShell({ title, subtitle, back, footer, children }: AuthShell
           <div className="mx-auto w-full max-w-md px-6 pb-10 text-center text-sm text-muted-foreground">{footer}</div>
         ) : null}
       </div>
-    </div>
+    </main>
   );
 }
