@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("redireciona anônimo de rota privada para o login", async ({ page }) => {
   await page.goto("/transactions");
   await expect(page).toHaveURL(/\/login\?next=%2Ftransactions/);
-  await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bem-vindo de volta" })).toBeVisible();
 });
 
 test("página de login não tem rolagem horizontal no mobile", async ({ page }) => {

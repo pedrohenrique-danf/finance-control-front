@@ -1,13 +1,26 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { AuthShell } from "@/components/layout/auth-shell";
+import { RegisterForm } from "@/features/auth";
 
 export const metadata: Metadata = { title: "Criar conta" };
 
-// RF01: o formulário de cadastro (Better Auth client) será implementado em features/auth (Lote 1).
 export default function RegisterPage() {
   return (
-    <AuthShell back title="Crie sua conta" subtitle="Leva menos de um minuto.">
-      <p className="text-sm text-muted-foreground">Formulário de cadastro em construção.</p>
+    <AuthShell
+      back
+      title="Crie sua conta"
+      subtitle="Leva menos de um minuto."
+      footer={
+        <>
+          Já tem conta?{" "}
+          <Link href="/login" className="font-bold text-primary underline-offset-4 hover:underline">
+            Entrar
+          </Link>
+        </>
+      }
+    >
+      <RegisterForm />
     </AuthShell>
   );
 }
