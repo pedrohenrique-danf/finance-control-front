@@ -117,39 +117,41 @@ export function TransactionItem(props: TransactionItemProps) {
   const revealed = offset !== 0;
   return (
     <div className="group/item relative overflow-hidden">
-      <div className="absolute inset-y-0 right-0 flex" style={{ width: ACTIONS_WIDTH }} aria-hidden={!revealed}>
-        <button
-          type="button"
-          tabIndex={revealed ? 0 : -1}
-          onClick={() => {
-            setOffset(0);
-            onOpen?.();
-          }}
-          className="flex flex-1 flex-col items-center justify-center gap-1 bg-accent-soft text-[11px] font-semibold text-foreground"
-        >
-          <Pencil className="size-4" aria-hidden /> Editar
-        </button>
-        <button
-          type="button"
-          tabIndex={revealed ? 0 : -1}
-          onClick={() => {
-            setOffset(0);
-            onDelete?.();
-          }}
-          className="flex flex-1 flex-col items-center justify-center gap-1 bg-expense text-[11px] font-semibold text-primary-foreground"
-        >
-          <Trash2 className="size-4" aria-hidden /> Excluir
-        </button>
-      </div>
+      {/* Ações do gesto (celular): só existem enquanto a linha é arrastada ou está aberta; fechada, nada fica atrás dela. */}
+      {revealed || dragging ? (
+        <div className="absolute inset-y-0 right-0 flex lg:hidden" style={{ width: ACTIONS_WIDTH }}>
+          <button
+            type="button"
+            onClick={() => {
+              setOffset(0);
+              onOpen?.();
+            }}
+            className="flex flex-1 flex-col items-center justify-center gap-1 bg-accent-soft text-[11px] font-semibold text-foreground"
+          >
+            <Pencil className="size-4" aria-hidden /> Editar
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOffset(0);
+              onDelete?.();
+            }}
+            className="flex flex-1 flex-col items-center justify-center gap-1 bg-expense text-[11px] font-semibold text-primary-foreground"
+          >
+            <Trash2 className="size-4" aria-hidden /> Excluir
+          </button>
+        </div>
+      ) : null}
       {row}
-      {/* Desktop/teclado: excluir direto, sem gesto. */}
+      {/* Desktop e teclado: um único botão de excluir, no espaço reservado à direita da linha (lg:pr-14). */}
       <button
         type="button"
         onClick={onDelete}
         aria-label={`Excluir ${transaction.description}`}
-        className="absolute top-1/2 right-2 hidden size-9 -translate-y-1/2 place-items-center rounded-full bg-card text-muted-foreground opacity-0 shadow-soft transition-opacity group-hover/item:opacity-100 hover:text-expense focus-visible:opacity-100 lg:grid"
+        title="Excluir"
+        className="absolute top-1/2 right-2 hidden size-10 -translate-y-1/2 place-items-center rounded-full text-muted-foreground opacity-0 transition-[opacity,color,background-color] group-hover/item:opacity-100 hover:bg-expense-soft hover:text-expense focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-primary lg:grid"
       >
-        <Trash2 className="size-4" aria-hidden />
+        <Trash2 className="size-[18px]" aria-hidden />
       </button>
     </div>
   );
