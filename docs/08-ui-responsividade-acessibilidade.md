@@ -52,9 +52,12 @@ Definir os padrões de interface do FinanceControl: abordagem **UI-First** e **m
 
 ### Importação e exportação (RF07)
 
-- Página única `import-export`: seleção de arquivo CSV, botão importar, resumo (linhas com sucesso/erro) e exportação por mês.
-- Exibir erros de importação por linha/campo de forma legível.
-- Mecanismo de upload/download: **[PENDENTE DE DEFINIÇÃO]** (depende do formato final do backend).
+- Página única `import-export`: seleção de arquivo (CSV ou PDF de fatura/extrato do Nubank), pré-visualização, exportação por mês e histórico.
+- Importação em duas etapas: a Server Action envia o arquivo ao backend (`POST /api/v1/imports/preview`, multipart, até 5 MB);
+  a tela mostra as linhas lidas para escolher conta, categoria e o que importar, e só então confirma (`POST /api/v1/imports`).
+- Exibir erros de importação por linha/campo de forma legível (lista recolhível com número da linha).
+- Download do CSV por link (`GET` com `Content-Disposition: attachment`); formato padrão Excel pt-BR, com BOM.
+- Gráficos: SVG puro, legenda sempre presente, identidade nunca só pela cor e tabela equivalente (`sr-only`) para leitores de tela.
 
 ### Acessibilidade
 
