@@ -16,3 +16,12 @@ export async function toActionResult<T>(fn: () => Promise<T>): Promise<ActionRes
     throw error; // erros inesperados e redirect()/notFound() do Next propagam
   }
 }
+
+/** Falha de validação no servidor (entrada da Server Action rejeitada pelo schema Zod). */
+export function validationFailure(error: { issues: ReadonlyArray<{ path: PropertyKey[]; message: string }> }): {
+  ok: false;
+  error: { code: string; message: string; fieldErrors: Record<string, string> };
+} {
+  const fieldErrors = Object.fromEntries(error.issues.map((i) => [i.path.map(String).join("."), i.message]));
+  return { ok: false, error: { code: "VALIDATION_ERROR", message: "Confira os campos destacados.", fieldErrors } };
+}
