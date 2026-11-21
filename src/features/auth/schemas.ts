@@ -35,6 +35,26 @@ export const registerFormSchema = z
 export type RegisterFormInput = z.input<typeof registerFormSchema>;
 export type RegisterFormValues = z.output<typeof registerFormSchema>;
 
+/** Perfil: nome exibido (Better Auth updateUser). */
+export const profileFormSchema = z.object({
+  name: z.string().trim().min(2, "Informe seu nome.").max(100, "Use no máximo 100 caracteres."),
+});
+export type ProfileFormValues = z.output<typeof profileFormSchema>;
+
+/** Trocar senha (Better Auth changePassword): exige a senha atual. */
+export const changePasswordFormSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Informe a senha atual."),
+    password: newPasswordField,
+    confirm: confirmField,
+  })
+  .refine(passwordsMatch, mismatch)
+  .refine((v) => v.password !== v.currentPassword, {
+    path: ["password"],
+    message: "A nova senha deve ser diferente da atual.",
+  });
+export type ChangePasswordFormValues = z.output<typeof changePasswordFormSchema>;
+
 export const forgotPasswordFormSchema = z.object({ email: emailField });
 export type ForgotPasswordFormValues = z.output<typeof forgotPasswordFormSchema>;
 

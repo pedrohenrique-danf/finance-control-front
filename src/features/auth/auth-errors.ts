@@ -4,7 +4,7 @@ export interface AuthClientError {
   code?: string | undefined;
 }
 
-export type AuthOperation = "login" | "register" | "forgot" | "reset" | "google";
+export type AuthOperation = "login" | "register" | "forgot" | "reset" | "google" | "profile" | "change-password";
 
 const GENERIC = "Não foi possível concluir agora. Tente novamente em instantes.";
 
@@ -27,6 +27,14 @@ export function authErrorMessage(operation: AuthOperation, error: AuthClientErro
       return "Não foi possível enviar o link agora. Tente novamente mais tarde.";
     case "reset":
       if (error.code === "INVALID_TOKEN") return "Este link é inválido ou expirou. Peça um novo link.";
+      return GENERIC;
+    case "profile":
+      return "Não foi possível salvar seu nome agora. Tente novamente.";
+    case "change-password":
+      if (error.code === "CREDENTIAL_ACCOUNT_NOT_FOUND") {
+        return "Sua conta entra pelo Google e não tem senha cadastrada.";
+      }
+      if (error.code === "INVALID_PASSWORD" || error.status === 400) return "A senha atual não confere.";
       return GENERIC;
     case "google":
       return "Não foi possível entrar com o Google agora. Tente novamente ou use e-mail e senha.";
