@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { mockCategories, mockValueSources, fromCents, toCents } = await import("./index");
+const { mockCategories, mockValueSources, mockTransactions, fromCents, toCents } = await import("./index");
 const { buildDemoData } = await import("./seed");
 const { userData } = await import("./store");
 
@@ -148,5 +148,87 @@ describe("contas simuladas", () => {
     expect(() => mockValueSources.get(userId, crypto.randomUUID())).toThrowError(
       expect.objectContaining({ status: 404 }),
     );
+  });
+});
+
+describe("transações simuladas", () => {
+  function ids() {
+    const data = userData(userId);
+    const despesa = data.categories.find((c) => c.type === "despesa");
+    const receita = data.categories.find((c) => c.type === "receita");
+    const conta = data.valueSources[0];
+    if (!despesa || !receita || !conta) throw new Error("seed incompleto");
+    return { despesa: despesa.id, receita: receita.id, conta: conta.id };
+  }
+
+  it("cria, filtra por busca sem acento e pagina com totais do conjunto filtrado", () => {
+    const { despesa, conta } = ids();
+    mockTransactions.create(userId, {
+      type: "despesa",
+      nature: "variavel",
+      description: "Pão de queijo",
+      amount: "12.50",
+      date: "2030-01-10",
+      status: "efetivada",
+      categoryId: despesa,
+      valueSourceId: conta,
+    });
+    const page = mockTransactions.list(userId, { month: "2030-01", q: "PAO", page: 1, pageSize: 20 });
+    expect(page.data).toHaveLength(1);
+    expect(page.meta.summary).toEqual({ income: "0.00", expense: "12.50", balance: "-12.50" });
+    expect(page.meta.dayTotals).toEqual({ "2030-01-10": "-12.50" });
+  });
+
+  it("pagina do mais recente para o mais antigo", () => {
+    const month = userData(userId).transactions[0]?.date.slice(0, 7) ?? "";
+    const first = mockTransactions.list(userId, { month, page: 1, pageSize: 5 });
+    const second = mockTransactions.list(userId, { month, page: 2, pageSize: 5 });
+    expect(first.data).toHaveLength(5);
+    expect(first.meta.totalPages).toBeGreaterThan(1);
+    const dates = [...first.data, ...second.data].map((t) => t.date);
+    expect(dates).toEqual([...dates].sort().reverse());
+  });
+
+  it("rejeita categoria de outro tipo e natureza em receita (400 por campo)", () => {
+    const { despesa, receita, conta } = ids();
+    const base = {
+      description: "x",
+      amount: "1.00",
+      date: "2030-01-01",
+      status: "efetivada" as const,
+      valueSourceId: conta,
+    };
+    expect(() =>
+      mockTransactions.create(userId, { ...base, type: "receita", nature: null, categoryId: despesa }),
+    ).toThrowError(
+      expect.objectContaining({ status: 400, details: [expect.objectContaining({ path: "categoryId" })] }),
+    );
+    expect(() =>
+      mockTransactions.create(userId, { ...base, type: "receita", nature: "fixa", categoryId: receita }),
+    ).toThrowError(expect.objectContaining({ details: [expect.objectContaining({ path: "nature" })] }));
+  });
+
+  it("período de datas ignora o mês; excluir dá 404 na segunda vez", () => {
+    const { despesa, conta } = ids();
+    const created = mockTransactions.create(userId, {
+      type: "despesa",
+      nature: "fixa",
+      description: "Teste período",
+      amount: "5.00",
+      date: "2031-03-03",
+      status: "pendente",
+      categoryId: despesa,
+      valueSourceId: conta,
+    });
+    const byPeriod = mockTransactions.list(userId, {
+      month: "2020-01",
+      from: "2031-03-01",
+      to: "2031-03-31",
+      page: 1,
+      pageSize: 20,
+    });
+    expect(byPeriod.data.map((t) => t.id)).toEqual([created.id]);
+    mockTransactions.remove(userId, created.id);
+    expect(() => mockTransactions.remove(userId, created.id)).toThrowError(expect.objectContaining({ status: 404 }));
   });
 });

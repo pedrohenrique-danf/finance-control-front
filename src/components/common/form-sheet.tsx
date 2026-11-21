@@ -1,5 +1,6 @@
 "use client";
 import { XIcon } from "lucide-react";
+import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -16,22 +17,44 @@ interface FormSheetProps {
   children: React.ReactNode;
 }
 
+const DESKTOP_QUERY = "(min-width: 64rem)"; // breakpoint `lg`
+
+function subscribe(onChange: () => void) {
+  const media = window.matchMedia(DESKTOP_QUERY);
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
+
+/** true a partir de `lg` (no servidor, assume mobile). */
+function useIsDesktop(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(DESKTOP_QUERY).matches,
+    () => false,
+  );
+}
+
 /**
  * Painel de formulário responsivo: sobe de baixo no mobile (bottom sheet)
  * e abre como painel lateral direito a partir de `lg`.
  */
 export function FormSheet({ open, onOpenChange, title, description, footer, headerAction, children }: FormSheetProps) {
+  const desktop = useIsDesktop();
   return (
     <Sheet open={open} onOpenChange={(next) => onOpenChange(next)}>
       <SheetContent
-        side="bottom"
+        side={desktop ? "right" : "bottom"}
         showCloseButton={false}
         className={cn(
-          "max-h-[92dvh] gap-0 rounded-t-3xl border-0 bg-background p-0 shadow-card",
-          "lg:inset-y-0 lg:right-0 lg:left-auto lg:h-dvh lg:max-h-none lg:w-[440px] lg:rounded-none lg:rounded-l-3xl",
+          "gap-0 border-0 bg-background p-0 shadow-card",
+          desktop
+            ? "data-[side=right]:w-[440px] data-[side=right]:max-w-[calc(100vw-2rem)] data-[side=right]:rounded-l-3xl data-[side=right]:sm:max-w-[440px]"
+            : "max-h-[92dvh] rounded-t-3xl",
         )}
       >
-        <div className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-accent-soft lg:hidden" aria-hidden />
+        {desktop ? null : (
+          <div className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-accent-soft" aria-hidden />
+        )}
         <div className="flex shrink-0 items-center gap-2 px-5 pt-3 pb-2 lg:pt-6">
           <div className="min-w-0 flex-1">
             <SheetTitle className="text-lg font-bold text-primary-dark">{title}</SheetTitle>
