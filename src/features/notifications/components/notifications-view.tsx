@@ -84,7 +84,7 @@ export function NotificationsView({ notifications, unread }: { notifications: No
             : `${unreadNow} ${unreadNow === 1 ? "notificação não lida" : "notificações não lidas"}`}
         </p>
         {unread > 0 && unreadNow > 0 ? (
-          <Button variant="ghost" size="sm" className="text-primary" onClick={markAll}>
+          <Button variant="ghost" className="text-primary" onClick={markAll}>
             <CheckCheck aria-hidden /> Marcar todas como lidas
           </Button>
         ) : null}

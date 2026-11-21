@@ -5,6 +5,7 @@ vi.mock("server-only", () => ({}));
 const {
   mockCategories,
   mockDashboard,
+  mockDataExchange,
   mockNotifications,
   mockRecurrences,
   mockValueSources,
@@ -404,5 +405,107 @@ describe("notificações geradas pelas ações", () => {
     expect(() => mockNotifications.markRead(id, crypto.randomUUID())).toThrowError(
       expect.objectContaining({ status: 404 }),
     );
+  });
+});
+
+describe("importação e exportação simuladas", () => {
+  it("confirmar cria transações de origem importação, a operação com erros e a notificação", () => {
+    const id = crypto.randomUUID();
+    const data = userData(id);
+    const despesa = data.categories.find((c) => c.type === "despesa");
+    const before = data.transactions.length;
+    const op = mockDataExchange.confirmImport(id, {
+      fileName: "fatura.pdf",
+      format: "pdf",
+      rows: [
+        {
+          date: "2026-10-01",
+          description: "Coffee House.",
+          amount: "8.50",
+          type: "despesa",
+          nature: "variavel",
+          status: "efetivada",
+          categoryId: despesa?.id ?? null,
+          valueSourceId: null,
+        },
+        {
+          date: "2026-10-12",
+          description: "Estorno",
+          amount: "30.00",
+          type: "receita",
+          nature: null,
+          status: "efetivada",
+          categoryId: null,
+          valueSourceId: null,
+        },
+      ],
+      errors: [{ line: 9, field: null, message: "Lançamento não reconhecido.", content: "?" }],
+    });
+    expect(op).toMatchObject({
+      type: "importacao",
+      format: "pdf",
+      status: "concluida_com_erros",
+      successRows: 2,
+      errorRows: 1,
+      periodStart: "2026-10-01",
+      periodEnd: "2026-10-12",
+    });
+    expect(data.transactions.length - before).toBe(2);
+    expect(data.transactions.at(-1)).toMatchObject({ origin: "importacao", description: "Estorno" });
+    expect(mockNotifications.list(id, 1, 5).data[0]).toMatchObject({ type: "importacao_concluida" });
+    expect(mockDataExchange.history(id)[0]?.id).toBe(op.id);
+  });
+
+  it("categoria de outro tipo é rejeitada por linha", () => {
+    const id = crypto.randomUUID();
+    const receita = userData(id).categories.find((c) => c.type === "receita");
+    expect(() =>
+      mockDataExchange.confirmImport(id, {
+        fileName: "a.csv",
+        format: "csv",
+        rows: [
+          {
+            date: "2026-10-01",
+            description: "x",
+            amount: "1.00",
+            type: "despesa",
+            nature: "variavel",
+            status: "efetivada",
+            categoryId: receita?.id ?? null,
+            valueSourceId: null,
+          },
+        ],
+        errors: [],
+      }),
+    ).toThrowError(
+      expect.objectContaining({ status: 400, details: [expect.objectContaining({ path: "rows.0.categoryId" })] }),
+    );
+  });
+
+  it("exporta no formato da importação (BOM, ;, dd/mm/aaaa, 1.234,56) e registra a operação", () => {
+    const id = crypto.randomUUID();
+    const data = userData(id);
+    data.transactions.push({
+      id: "t1",
+      type: "despesa",
+      nature: "variavel",
+      description: 'Loja "A"; B',
+      amount: "1234.50",
+      date: "2030-02-03",
+      status: "pendente",
+      origin: "manual",
+      categoryId: null,
+      valueSourceId: null,
+      recurrenceId: null,
+    });
+    const { fileName, content } = mockDataExchange.exportCsv(id, "2030-02");
+    expect(fileName).toBe("financecontrol-2030-02.csv");
+    expect(content.startsWith("﻿data;descricao;valor;tipo;natureza;situacao;categoria;conta\r\n")).toBe(true);
+    expect(content).toContain('03/02/2030;"Loja ""A""; B";1.234,50;despesa;variavel;pendente;;');
+    expect(mockDataExchange.history(id)[0]).toMatchObject({
+      type: "exportacao",
+      successRows: 1,
+      periodEnd: "2030-02-28",
+    });
   });
 });
