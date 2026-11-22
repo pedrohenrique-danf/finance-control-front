@@ -1,15 +1,33 @@
 import type { Metadata } from "next";
-import { PageSection } from "@/components/layout/page-section";
+import Link from "next/link";
+import { AuthShell } from "@/components/layout/auth-shell";
+import { LoginForm } from "@/features/auth";
+import { firstParam } from "@/lib/search-params";
 
 export const metadata: Metadata = { title: "Entrar" };
 
-// RF01: o formulário (Better Auth client) será implementado em features/auth.
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: PageProps<"/login">) {
+  const params = await searchParams;
+  const next = firstParam(params.next);
+  // errorCallbackURL do login com Google
+  const initialError = firstParam(params.error)
+    ? "Não foi possível entrar com o Google. Tente novamente ou use e-mail e senha."
+    : undefined;
+
   return (
-    <main className="mx-auto max-w-sm px-4 py-10">
-      <PageSection title="Entrar" description="Acesse sua conta do FinanceControl.">
-        <p className="text-sm text-muted-foreground">Formulário de login em construção.</p>
-      </PageSection>
-    </main>
+    <AuthShell
+      title="Bem-vindo de volta"
+      subtitle="Suas finanças, com clareza."
+      footer={
+        <>
+          Não tem conta?{" "}
+          <Link href="/register" className="font-bold text-primary underline-offset-4 hover:underline">
+            Cadastre-se
+          </Link>
+        </>
+      }
+    >
+      <LoginForm next={next} initialError={initialError} />
+    </AuthShell>
   );
 }

@@ -29,32 +29,46 @@ finance-control-front/
 │   ├── app/                              # roteamento (App Router) — somente composição
 │   │   ├── layout.tsx                    # raiz: fontes, Providers
 │   │   ├── error.tsx  loading.tsx  not-found.tsx
-│   │   ├── (public)/
-│   │   │   ├── login/page.tsx
-│   │   │   └── register/page.tsx
+│   │   ├── (public)/                     # AuthShell (faixa da marca + formulário)
+│   │   │   ├── login/page.tsx            # RF01 (?next)
+│   │   │   ├── register/page.tsx
+│   │   │   ├── forgot-password/page.tsx
+│   │   │   └── reset-password/page.tsx   # ?token= do e-mail do Better Auth
 │   │   └── (private)/
-│   │       ├── layout.tsx                # exige sessão (requireSession)
+│   │       ├── layout.tsx                # exige sessão; compõe o formulário global de transação e o sino
 │   │       ├── dashboard/page.tsx        # RF05
-│   │       ├── transactions/page.tsx     # RF03 + RF06
+│   │       ├── transactions/page.tsx     # RF03 + RF06 (filtros e ?page= na URL)
 │   │       ├── categories/page.tsx       # RF02
 │   │       ├── recurrences/page.tsx      # RF04
-│   │       └── import-export/page.tsx    # RF07
+│   │       ├── recurrences/[id]/page.tsx # agenda de 6 meses
+│   │       ├── accounts/page.tsx         # contas e cartões (fontes_valor)
+│   │       ├── accounts/[id]/page.tsx
+│   │       ├── import-export/page.tsx    # RF07
+│   │       ├── import-export/export/route.ts  # download do CSV (TODO(back): /api/v1/exports)
+│   │       ├── notifications/page.tsx
+│   │       └── profile/page.tsx          # nome e senha (Better Auth)
 │   ├── features/                         # um diretório por domínio
-│   │   ├── auth/
+│   │   ├── auth/                         # login, cadastro, senha, perfil
+│   │   ├── accounts/
 │   │   ├── categories/
-│   │   ├── transactions/
+│   │   ├── transactions/                 # inclui o formulário global (TransactionSheet)
 │   │   ├── recurrences/
-│   │   ├── dashboard/
-│   │   └── data-exchange/
+│   │   ├── dashboard/                    # gráficos em SVG puro
+│   │   ├── data-exchange/                # importar (CSV/PDF Nubank via backend) e exportar
+│   │   └── notifications/
 │   ├── components/
-│   │   ├── ui/                           # primitivos shadcn/ui
-│   │   └── layout/                       # shell, navegação, PageSection
+│   │   ├── ui/                           # primitivos shadcn/ui (button/input/select/textarea ajustados à identidade)
+│   │   ├── common/                       # peças visuais compartilhadas: Money, Field, FormSheet, CategoryIcon…
+│   │   └── layout/                       # AppShell, AuthShell, PageSection, menus, ShellProvider
 │   ├── lib/
-│   │   ├── api/                          # client.ts, errors.ts, server.ts
+│   │   ├── api/                          # client.ts (get/post/postForm/put/delete), errors.ts, server.ts
 │   │   ├── auth/                         # auth-client.ts, session.ts
 │   │   ├── config/env.ts                 # ÚNICO lugar que lê process.env
-│   │   ├── actions/                      # ActionResult, toActionResult
-│   │   └── format/                       # money.ts, date.ts
+│   │   ├── actions/                      # ActionResult, toActionResult, validationFailure
+│   │   ├── forms/                        # applyActionError (erros da action → campos do RHF)
+│   │   ├── format/                       # money.ts, date.ts
+│   │   ├── mock-backend/                 # backend simulado (TODO(back)) — ver abaixo
+│   │   └── search-params.ts
 │   └── proxy.ts                          # "middleware" do Next 16 (verificação otimista de sessão)
 ├── tests/
 │   ├── unit/
@@ -75,12 +89,23 @@ finance-control-front/
 ```
 features/categories/
 ├── index.ts                     # API pública da feature
-├── api.ts                       # createCategoriesApi(api)
-├── actions.ts                   # Server Actions (finas)
-├── schemas.ts                   # espelho do contrato (// SYNC:)
-├── components/                  # CategoryList, CategoryForm...
+├── data-source.ts               # interface + implementação (hoje: mock-backend; depois: getApi())
+├── actions.ts                   # Server Actions (finas): validam com Zod e chamam o data source
+├── schemas.ts                   # espelho do contrato (// SYNC:) + schema do formulário
+├── components/                  # CategoriesView, CategorySheet...
 └── categories.test.ts
 ```
+
+### Camada de dados enquanto o backend não tem as rotas de domínio
+
+Cada feature expõe um **data source** (interface) que as páginas e as Server Actions usam. Hoje a implementação
+chama `src/lib/mock-backend` — um backend simulado **em memória, por usuário, só no servidor**, que segue o contrato
+de `finance-control-back/docs` (02 e 07): mesmos campos, enums do banco, erros 400/404/409 por campo e regras como
+RNF02, natureza só em despesas e materialização de recorrências. Cada data source tem um comentário `TODO(back)`
+com as chamadas `getApi()` equivalentes; ao implementar uma rota no backend, troca-se só essa implementação.
+
+- O estado some ao reiniciar o `next dev`; cada usuário novo recebe os dados de demonstração do protótipo.
+- Já é real: autenticação (Better Auth) e a leitura de arquivos de importação (`POST /api/v1/imports/preview`).
 
 Regras: `app/` apenas importa de `features/*/index.ts`, `components/` e `lib/`. Uma feature **não importa** arquivos internos de outra. `components/` e `lib/` **não importam** de `features/` nem de `app/`.
 

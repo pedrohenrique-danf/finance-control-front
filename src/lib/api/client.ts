@@ -14,7 +14,7 @@ type Query = Record<string, string | number | undefined>;
 export function createApiClient(deps: ApiClientDeps) {
   const fetchFn = deps.fetchFn ?? fetch;
 
-  async function send(method: string, path: string, opts: { body?: unknown; query?: Query } = {}) {
+  async function send(method: string, path: string, opts: { body?: unknown; form?: FormData; query?: Query } = {}) {
     const params = new URLSearchParams();
     for (const [k, v] of Object.entries(opts.query ?? {})) if (v !== undefined) params.set(k, String(v));
     const qs = params.size > 0 ? `?${params}` : "";
@@ -22,11 +22,13 @@ export function createApiClient(deps: ApiClientDeps) {
     const headers = new Headers(await deps.getHeaders?.());
     headers.set("Accept", "application/json");
     if (opts.body !== undefined) headers.set("Content-Type", "application/json");
+    // multipart: o fetch define o Content-Type com o boundary.
+    const body = opts.form ?? (opts.body === undefined ? null : JSON.stringify(opts.body));
 
     const res = await fetchFn(`${deps.baseUrl}${path}${qs}`, {
       method,
       headers,
-      body: opts.body === undefined ? null : JSON.stringify(opts.body),
+      body,
       credentials: deps.credentials ?? "same-origin",
       cache: "no-store",
     });
@@ -40,6 +42,10 @@ export function createApiClient(deps: ApiClientDeps) {
     },
     async post<S extends z.ZodType>(path: string, body: unknown, schema: S): Promise<z.output<S>> {
       return schema.parse(await (await send("POST", path, { body })).json());
+    },
+    /** POST multipart/form-data (upload de arquivo). */
+    async postForm<S extends z.ZodType>(path: string, form: FormData, schema: S): Promise<z.output<S>> {
+      return schema.parse(await (await send("POST", path, { form })).json());
     },
     async put<S extends z.ZodType>(path: string, body: unknown, schema: S): Promise<z.output<S>> {
       return schema.parse(await (await send("PUT", path, { body })).json());

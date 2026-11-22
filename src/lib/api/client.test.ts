@@ -50,3 +50,19 @@ describe("createApiClient", () => {
     expect(calledUrl).toBe("http://api/x?month=2026-11&page=2");
   });
 });
+
+describe("postForm", () => {
+  it("envia multipart sem Content-Type JSON (o fetch define o boundary)", async () => {
+    let captured: RequestInit | undefined;
+    const fetchFn = (async (_url: string, init?: RequestInit) => {
+      captured = init;
+      return new Response(JSON.stringify({ id: "1" }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const api = createApiClient({ baseUrl: "http://back", fetchFn });
+    const form = new FormData();
+    form.set("file", new File(["a"], "a.csv"));
+    await expect(api.postForm("/api/v1/imports/preview", form, itemSchema)).resolves.toEqual({ id: "1" });
+    expect(captured?.body).toBe(form);
+    expect(new Headers(captured?.headers).get("Content-Type")).toBeNull();
+  });
+});

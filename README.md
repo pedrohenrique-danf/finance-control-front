@@ -53,6 +53,15 @@ Versões fixadas no `package.json` (sem `^`/`latest`) e no `pnpm-lock.yaml`.
 | `cacheComponents`               | **desligado**: leituras com cookie repassado (`getApi()`) não exigem `<Suspense>`                            | 03, 04     |
 | Testes unitários                | Vitest                                                                                                       | 05         |
 | Lint/formatação e pacotes       | Biome; pnpm 12                                                                                               | 05         |
+| Identidade visual               | Protótipo Lovable migrado: paleta oliva/terrosa, Plus Jakarta Sans, cantos de 14 px; **só tema claro**      | 08         |
+| Primitivos shadcn/ui            | `button`, `input`, `select` e `textarea` **ajustados** à identidade (alturas de 44–48 px, variantes receita/despesa). Exceção à regra de não editar `components/ui` | 08 |
+| Componentes compartilhados      | `src/components/common` (Money, Field, FormSheet, CategoryIcon, MoneyInput, AmountField…)                 | 03         |
+| Layout                          | Responsivo: mobile com barra inferior e botão "+", desktop com barra lateral fixa; painéis sobem de baixo no mobile e abrem à direita no desktop | 08 |
+| Gráficos                        | SVG puro (sem biblioteca); cores validadas para daltonismo; tabela equivalente para leitores de tela        | 08         |
+| Camada de dados                 | Data source por feature; hoje `src/lib/mock-backend` (TODO(back)) até o backend ter as rotas              | 03         |
+| `status` da transação           | `pendente`/`efetivada`; na tela "Pago"/"Recebido"/"Pendente"                                               | 06         |
+| Importação/exportação (RF07)    | CSV padrão Excel pt-BR (`;`, dd/mm/aaaa, 1.234,56) nos dois sentidos; PDF de fatura e extrato do Nubank lido **no backend** (pdfjs-dist), com pré-visualização antes de confirmar | 06, backend 07 |
+| Notificações                    | Geradas pelas ações (lançar, criar categoria/conta/despesa fixa, importar, exportar); lembretes ficam para depois do MVP | backend 07 |
 
 ## Decisões pendentes (consolidado)
 
@@ -63,9 +72,10 @@ Versões fixadas no `package.json` (sem `^`/`latest`) e no `pnpm-lock.yaml`.
 | 3   | Ferramenta de teste de componentes                                                                          | 05         |
 | 4   | Política de CSP                                                                                             | 07         |
 | 5   | Ferramenta de acessibilidade automatizada                                                                   | 08         |
-| 6   | Fluxo de download/upload de CSV (RF07)                                                                      | 08         |
-| 7   | Valores de `status` da transação exibidos na UI                                                             | 06         |
-| 8   | Hospedagem (Vercel a confirmar), plataforma de CI e meta de cobertura                                       | 05         |
+| 6   | Hospedagem (Vercel a confirmar), plataforma de CI e meta de cobertura                                       | 05         |
+| 7   | Páginas de termos de uso e política de privacidade (o cadastro exige o aceite)                             | 07         |
+| 8   | Envio do e-mail de redefinição de senha (`sendResetPassword` no backend)                                    | 07         |
+| 9   | Materialização dos meses futuros das despesas fixas (job diário × na leitura) — backend                     | backend 07 |
 
 ## Setup rápido
 
@@ -75,6 +85,7 @@ cp .env.example .env.local         # BACKEND_URL=http://localhost:3001
 pnpm exec playwright install chromium   # navegador dos testes E2E (uma vez)
 pnpm dev                           # http://localhost:3000 (o backend precisa estar rodando)
 pnpm verify                        # typecheck + lint + testes unitários
+pnpm test:e2e                      # Playwright (desktop + mobile); exige o backend rodando
 ```
 
 ## Convenções compartilhadas com o backend
@@ -85,25 +96,39 @@ pnpm verify                        # typecheck + lint + testes unitários
 | IDs      | UUID (string)                                                                                                              |
 | Dinheiro | string decimal `"1234.50"`; o usuário digita/vê formato pt-BR (`1.234,50`)                                                 |
 | Datas    | `"YYYY-MM-DD"`; mês `"YYYY-MM"`                                                                                            |
-| Enums    | `income`/`expense`; `fixed`/`variable`; `manual`/`recurrence`/`import`                                                     |
+| Enums    | valores do banco: `receita`/`despesa`; `fixa`/`variavel`; `pendente`/`efetivada`; `manual`/`recorrencia`/`importacao`     |
 | Coleção  | `{ data: T[], meta?: { page, pageSize, total } }`; recurso único: objeto direto                                            |
 | Erro     | `{ error: { code, message, details?, requestId } }`                                                                        |
 | Códigos  | `VALIDATION_ERROR` 400 · `UNAUTHENTICATED` 401 · `FORBIDDEN` 403 · `NOT_FOUND` 404 · `CONFLICT` 409 · `INTERNAL_ERROR` 500 |
 | Sessão   | cookie `httpOnly` do Better Auth — o JavaScript do frontend nunca lê o token                                               |
 
+## Telas
+
+| Rota | Tela | Dados |
+| --- | --- | --- |
+| `/login`, `/register`, `/forgot-password`, `/reset-password` | Autenticação (RF01) | Better Auth real (redefinição depende do e-mail no backend) |
+| `/dashboard` | Início: saldo, cards, gráficos, próximas fixas, últimas transações (RF05) | mock-backend |
+| `/transactions` | Extrato com busca, filtros e "Carregar mais" (RF06); formulário global pelo "+" (RF03) | mock-backend |
+| `/categories` | Categorias com total do mês (RF02) | mock-backend |
+| `/recurrences`, `/recurrences/[id]` | Despesas fixas e agenda de 6 meses (RF04) | mock-backend |
+| `/accounts`, `/accounts/[id]` | Contas e cartões | mock-backend |
+| `/import-export` | Importar CSV/PDF Nubank e exportar CSV (RF07) | leitura do arquivo **real** no backend; confirmação, histórico e exportação no mock-backend |
+| `/notifications` | Notificações geradas pelas ações | mock-backend |
+| `/profile` | Nome e senha | Better Auth real |
+
 ## Índice
 
 | Arquivo                                                                          | Conteúdo                                             |
 | -------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| [01-typescript-react-fundamentos.md](01-typescript-react-fundamentos.md)         | Tipos, componentes, hooks, composição, módulos       |
-| [02-consumo-http-rest-contratos.md](02-consumo-http-rest-contratos.md)           | Cliente HTTP, erros, status codes, contratos         |
-| [03-estrutura-projeto-configuracao.md](03-estrutura-projeto-configuracao.md)     | Pastas, App Router, ambientes, rewrites              |
-| [04-composicao-di-contexto-nextjs.md](04-composicao-di-contexto-nextjs.md)       | Fábricas, DI, server/client, contexto por requisição |
-| [05-empacotamento-scripts-testes.md](05-empacotamento-scripts-testes.md)         | Scripts, dependências, testes, Playwright            |
-| [06-dados-formularios-validacao.md](06-dados-formularios-validacao.md)           | Modelos, formulários, Zod, dinheiro e datas          |
-| [07-autenticacao-seguranca.md](07-autenticacao-seguranca.md)                     | Better Auth no cliente, proteção de rotas, segurança |
-| [08-ui-responsividade-acessibilidade.md](08-ui-responsividade-acessibilidade.md) | Dashboard, tabela, mobile-first, acessibilidade      |
-| [99-rastreabilidade.md](99-rastreabilidade.md)                                   | Unidade → arquivo; requisito → arquivo               |
+| [01-typescript-react-fundamentos.md](docs/01-typescript-react-fundamentos.md)         | Tipos, componentes, hooks, composição, módulos       |
+| [02-consumo-http-rest-contratos.md](docs/02-consumo-http-rest-contratos.md)           | Cliente HTTP, erros, status codes, contratos         |
+| [03-estrutura-projeto-configuracao.md](docs/03-estrutura-projeto-configuracao.md)     | Pastas, App Router, ambientes, rewrites              |
+| [04-composicao-di-contexto-nextjs.md](docs/04-composicao-di-contexto-nextjs.md)       | Fábricas, DI, server/client, contexto por requisição |
+| [05-empacotamento-scripts-testes.md](docs/05-empacotamento-scripts-testes.md)         | Scripts, dependências, testes, Playwright            |
+| [06-dados-formularios-validacao.md](docs/06-dados-formularios-validacao.md)           | Modelos, formulários, Zod, dinheiro e datas          |
+| [07-autenticacao-seguranca.md](docs/07-autenticacao-seguranca.md)                     | Better Auth no cliente, proteção de rotas, segurança |
+| [08-ui-responsividade-acessibilidade.md](docs/08-ui-responsividade-acessibilidade.md) | Dashboard, tabela, mobile-first, acessibilidade      |
+| [99-rastreabilidade.md](docs/99-rastreabilidade.md)                                   | Unidade → arquivo; requisito → arquivo               |
 
 ## Regras globais
 

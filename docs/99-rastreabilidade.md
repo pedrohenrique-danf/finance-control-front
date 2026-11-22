@@ -49,9 +49,9 @@ Cobre o mapeamento **unidade → arquivo** e **requisito → arquivo**. Não cri
 | RF04 Projeção de despesas fixas | 02, 03 |
 | RF05 Dashboard | 02, 08 |
 | RF06 Listagem mensal | 02, 06, 08 |
-| RF07 Importação/exportação | 02, 08 (fluxo **[PENDENTE DE DEFINIÇÃO]**) |
-| RNF01 Responsividade | 05, 08 |
-| RNF02 Integridade relacional (reflexo na UI) | 05, 06, 08 |
+| RF07 Importação/exportação | 02, 03, 08 (CSV pt-BR e PDF Nubank lido no backend; contrato em backend 07) |
+| RNF01 Responsividade | 05, 08 (e2e: `tests/e2e/responsive.spec.ts`, 360 px) |
+| RNF02 Integridade relacional (reflexo na UI) | 05, 06, 08 (e2e: `tests/e2e/finance-flow.spec.ts`) |
 | RNF03 Segurança | 03, 07 |
 | RNF04 Validação | 06 |
 
