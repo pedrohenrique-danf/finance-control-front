@@ -1,6 +1,7 @@
 import "server-only";
-import { requireSession } from "@/lib/auth/session";
-import { mockCategories, mockDashboard } from "@/lib/mock-backend";
+import { cache } from "react";
+import { z } from "zod";
+import { getApi } from "@/lib/api/server";
 import {
   type Category,
   type CategoryFormValues,
@@ -20,23 +21,25 @@ export interface CategoriesDataSource {
   remove(id: string): Promise<void>;
 }
 
-// TODO(back): as rotas de categorias ainda não existem no finance-control-back. Ao implementá-las, troque
-// por uma implementação com getApi() (o parse com os schemas abaixo continua igual):
-//   list   → api.get("/api/v1/categories", categoryListSchema)
-//   create → api.post("/api/v1/categories", input, categorySchema)
-//   update → api.put(`/api/v1/categories/${id}`, input, categorySchema)
-//   remove → api.delete(`/api/v1/categories/${id}`)
-//   totais do mês → api.get("/api/v1/dashboard/summary", …, { month }).byCategory  (backend docs/02)
-const mockDataSource: CategoriesDataSource = {
-  async list() {
-    const { user } = await requireSession();
-    return categoryListSchema.parse({ data: mockCategories.list(user.id) }).data;
-  },
+/** Só o trecho do resumo do mês que a tela de categorias usa (backend docs/02, `byCategory`). */
+const summaryTotalsSchema = z.object({ byCategory: categoryTotalsSchema.shape.data });
+
+// Contrato: finance-control-back docs/02 e 07 ("Categorias").
+// Layout (formulário global) e página pedem a lista na mesma requisição: uma chamada só.
+const listCategories = cache(async () => {
+  const api = await getApi();
+  return (await api.get("/api/v1/categories", categoryListSchema)).data;
+});
+
+export const categoriesDataSource: CategoriesDataSource = {
+  list: listCategories,
 
   async listWithTotals(month) {
-    const { user } = await requireSession();
-    const categories = categoryListSchema.parse({ data: mockCategories.list(user.id) }).data;
-    const totals = categoryTotalsSchema.parse({ data: mockDashboard.summary(user.id, month).byCategory }).data;
+    const api = await getApi();
+    const [categories, { byCategory: totals }] = await Promise.all([
+      listCategories(),
+      api.get("/api/v1/dashboard/summary", summaryTotalsSchema, { month }),
+    ]);
     const totalOf = (type: CategoryType, categoryId: string | null) =>
       totals.find((t) => t.type === type && t.categoryId === categoryId)?.total ?? "0.00";
     const byType = (type: CategoryType): CategoryTotalsByType => ({
@@ -47,19 +50,17 @@ const mockDataSource: CategoriesDataSource = {
   },
 
   async create(input) {
-    const { user } = await requireSession();
-    return categorySchema.parse(mockCategories.create(user.id, input));
+    const api = await getApi();
+    return api.post("/api/v1/categories", input, categorySchema);
   },
 
   async update(id, input) {
-    const { user } = await requireSession();
-    return categorySchema.parse(mockCategories.update(user.id, id, input));
+    const api = await getApi();
+    return api.put(`/api/v1/categories/${encodeURIComponent(id)}`, input, categorySchema);
   },
 
   async remove(id) {
-    const { user } = await requireSession();
-    mockCategories.remove(user.id, id);
+    const api = await getApi();
+    await api.delete(`/api/v1/categories/${encodeURIComponent(id)}`);
   },
 };
-
-export const categoriesDataSource: CategoriesDataSource = mockDataSource;

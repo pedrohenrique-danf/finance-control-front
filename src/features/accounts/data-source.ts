@@ -1,7 +1,7 @@
 import "server-only";
-import { ApiError } from "@/lib/api/errors";
-import { requireSession } from "@/lib/auth/session";
-import { mockValueSources } from "@/lib/mock-backend";
+import { cache } from "react";
+import { nullIfNotFound } from "@/lib/api/errors";
+import { getApi } from "@/lib/api/server";
 import { type Account, type AccountInput, accountListSchema, accountSchema } from "./schemas";
 
 /** Acesso a dados de contas e cartões (tabela fontes_valor). */
@@ -13,37 +13,28 @@ export interface AccountsDataSource {
   update(id: string, input: AccountInput): Promise<Account>;
 }
 
-// TODO(back): as rotas de fontes_valor ainda não existem no finance-control-back (contrato: docs/02 e 07).
-// Ao implementá-las, troque por getApi() mantendo o parse com os schemas:
-//   list   → api.get("/api/v1/value-sources", accountListSchema)
-//   get    → api.get(`/api/v1/value-sources/${id}`, accountSchema)  (404 → null)
-//   create → api.post("/api/v1/value-sources", input, accountSchema)
-//   update → api.put(`/api/v1/value-sources/${id}`, input, accountSchema)
-const mockDataSource: AccountsDataSource = {
-  async list() {
-    const { user } = await requireSession();
-    return accountListSchema.parse({ data: mockValueSources.list(user.id) }).data;
-  },
+// Contrato: finance-control-back docs/02 e 07 ("Contas e cartões").
+// Layout (formulário global) e página pedem a lista na mesma requisição: uma chamada só.
+const listAccounts = cache(async () => {
+  const api = await getApi();
+  return (await api.get("/api/v1/value-sources", accountListSchema)).data;
+});
+
+export const accountsDataSource: AccountsDataSource = {
+  list: listAccounts,
 
   async get(id) {
-    const { user } = await requireSession();
-    try {
-      return accountSchema.parse(mockValueSources.get(user.id, id));
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 404) return null;
-      throw error;
-    }
+    const api = await getApi();
+    return nullIfNotFound(api.get(`/api/v1/value-sources/${encodeURIComponent(id)}`, accountSchema));
   },
 
   async create(input) {
-    const { user } = await requireSession();
-    return accountSchema.parse(mockValueSources.create(user.id, input));
+    const api = await getApi();
+    return api.post("/api/v1/value-sources", input, accountSchema);
   },
 
   async update(id, input) {
-    const { user } = await requireSession();
-    return accountSchema.parse(mockValueSources.update(user.id, id, input));
+    const api = await getApi();
+    return api.put(`/api/v1/value-sources/${encodeURIComponent(id)}`, input, accountSchema);
   },
 };
-
-export const accountsDataSource: AccountsDataSource = mockDataSource;

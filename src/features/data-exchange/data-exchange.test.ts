@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { type ImportPreview, type ImportRow, matchAccount, matchCategory, suggestAccount } from "./schemas";
+import {
+  exportCsvHref,
+  type ImportPreview,
+  type ImportRow,
+  matchAccount,
+  matchCategory,
+  suggestAccount,
+} from "./schemas";
 
 const accounts = [
   { id: "c1", name: "Carteira", type: "carteira", institution: "Dinheiro", active: true },
@@ -50,5 +57,11 @@ describe("sugestões da revisão de importação", () => {
     expect(matchCategory(row({ categoryName: null }), categories)).toBe("");
     expect(matchAccount(row({ accountName: "NUBANK" }), accounts)).toBe("n1");
     expect(matchAccount(row({ accountName: "Itaú" }), accounts)).toBeNull();
+  });
+});
+
+describe("exportação", () => {
+  it("o link aponta direto para a rota do backend (mesma origem pelo rewrite)", () => {
+    expect(exportCsvHref("2026-11")).toBe("/api/v1/exports/transactions?month=2026-11&format=csv");
   });
 });

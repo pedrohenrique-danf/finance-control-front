@@ -31,18 +31,25 @@ export const MAX_PAGE = 25;
 type SearchParams = Record<string, string | string[] | undefined>;
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const ID_LIST = /^[0-9a-f-]{36}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function list(raw: string | string[] | undefined): string[] {
   return (firstParam(raw) ?? "")
     .split(",")
-    .filter((id) => ID_LIST.test(id))
+    .filter((id) => UUID.test(id))
     .slice(0, 50);
+}
+
+/** "YYYY-MM-DD" que existe no calendário (o backend recusa 2026-02-30 com 400). */
+function isRealDate(value: string): boolean {
+  const [y = 0, m = 0, d = 0] = value.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d && value >= "2000-01-01";
 }
 
 function date(raw: string | string[] | undefined): string | null {
   const value = firstParam(raw);
-  return value && ISO_DATE.test(value) ? value : null;
+  return value && ISO_DATE.test(value) && isRealDate(value) ? value : null;
 }
 
 export function parseTransactionFilters(params: SearchParams, now = new Date()): TransactionFilters {

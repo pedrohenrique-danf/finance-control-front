@@ -18,6 +18,7 @@ import {
   type DataOperation,
   type ExchangeAccount,
   type ExchangeCategory,
+  exportCsvHref,
   type ImportPreview,
   MAX_FILE_BYTES,
 } from "../schemas";
@@ -134,7 +135,7 @@ function ExportCard({ defaultMonth }: { defaultMonth: string }) {
         <Input id="export-month" type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
       </Field>
       <a
-        href={valid ? `/import-export/export?month=${month}` : undefined}
+        href={valid ? exportCsvHref(month) : undefined}
         aria-disabled={!valid}
         onClick={() => setTimeout(() => router.refresh(), 1500)}
         className={cn(

@@ -1,7 +1,6 @@
 import "server-only";
-import { ApiError } from "@/lib/api/errors";
-import { requireSession } from "@/lib/auth/session";
-import { mockTransactions, type TransactionQuery } from "@/lib/mock-backend";
+import { nullIfNotFound } from "@/lib/api/errors";
+import { getApi } from "@/lib/api/server";
 import { PAGE_SIZE, quickToQuery, type TransactionFilters } from "./filters";
 import {
   type RepeatMonthly,
@@ -33,84 +32,90 @@ export interface TransactionsDataSource {
   remove(id: string): Promise<void>;
 }
 
-function toQuery(filters: TransactionFilters, page: number, pageSize = PAGE_SIZE): TransactionQuery {
+/** Maior página aceita pelo backend (listTransactionsQuerySchema). */
+const MAX_PAGE_SIZE = 100;
+
+/** Query de GET /api/v1/transactions (backend docs/07). Listas de ids vão em CSV. */
+function toQuery(filters: TransactionFilters) {
+  // período invertido digitado na URL: o backend recusaria com 400
+  const [from, to] =
+    filters.from && filters.to && filters.from > filters.to ? [filters.to, filters.from] : [filters.from, filters.to];
   return {
     month: filters.month,
-    from: filters.from ?? undefined,
-    to: filters.to ?? undefined,
+    from: from ?? undefined,
+    to: to ?? undefined,
     q: filters.q || undefined,
     ...quickToQuery(filters.quick),
     status: filters.status ?? undefined,
-    categoryIds: filters.categoryIds,
-    valueSourceIds: filters.accountIds,
-    page,
-    pageSize,
+    categoryIds: filters.categoryIds.join(",") || undefined,
+    valueSourceIds: filters.accountIds.join(",") || undefined,
   };
 }
 
-// TODO(back): as rotas de transações ainda não existem no finance-control-back. Ao implementá-las,
-// troque por getApi() mantendo o parse com os schemas:
-//   página   → api.get("/api/v1/transactions", transactionPageSchema, { month, from, to, q, type, nature,
-//                status, categoryIds: csv, valueSourceIds: csv, page, pageSize })  (backend docs/07)
-//   obter    → api.get(`/api/v1/transactions/${id}`, transactionSchema)
-//   criar    → api.post("/api/v1/transactions", { ...input, repeatMonthly }, transactionSchema)
-//   editar   → api.put(`/api/v1/transactions/${id}`, input, transactionSchema)
-//   excluir  → api.delete(`/api/v1/transactions/${id}`)
-const mockDataSource: TransactionsDataSource = {
+const path = (id: string) => `/api/v1/transactions/${encodeURIComponent(id)}`;
+
+// Contrato: finance-control-back docs/02 e 07 ("Transações").
+export const transactionsDataSource: TransactionsDataSource = {
+  /** As páginas acumuladas vêm numa só chamada enquanto couberem no limite do backend. */
   async statement(filters, upToPage) {
-    const { user } = await requireSession();
+    const api = await getApi();
+    const query = toQuery(filters);
     const items: Transaction[] = [];
     let last: TransactionPage | undefined;
-    for (let page = 1; page <= upToPage; page++) {
-      last = transactionPageSchema.parse(mockTransactions.list(user.id, toQuery(filters, page)));
-      items.push(...last.data);
-      if (page >= last.meta.totalPages) break;
+    const perCall = Math.max(1, Math.floor(MAX_PAGE_SIZE / PAGE_SIZE)); // páginas da tela por requisição
+    for (let call = 0; call * perCall < upToPage; call++) {
+      const pages = Math.min(perCall, upToPage - call * perCall);
+      last = await api.get("/api/v1/transactions", transactionPageSchema, {
+        ...query,
+        page: call + 1,
+        pageSize: PAGE_SIZE * perCall,
+      });
+      items.push(...last.data.slice(0, PAGE_SIZE * pages));
+      if (items.length >= last.meta.total) break;
     }
     if (!last) throw new Error("Página inválida.");
+    const total = last.meta.total;
     return {
       items,
-      page: last.meta.page,
-      hasMore: last.meta.page < last.meta.totalPages,
+      page: Math.max(1, Math.min(upToPage, Math.ceil(total / PAGE_SIZE))),
+      hasMore: items.length < total,
       summary: last.meta.summary,
       dayTotals: last.meta.dayTotals,
     };
   },
 
   async latest(month, limit) {
-    const { user } = await requireSession();
-    return transactionPageSchema.parse(mockTransactions.list(user.id, { month, page: 1, pageSize: limit })).data;
+    const api = await getApi();
+    return (await api.get("/api/v1/transactions", transactionPageSchema, { month, page: 1, pageSize: limit })).data;
   },
 
   async byAccount(accountId, limit) {
-    const { user } = await requireSession();
-    const page = mockTransactions.list(user.id, { valueSourceIds: [accountId], page: 1, pageSize: limit });
-    return transactionPageSchema.parse(page).data;
+    const api = await getApi();
+    const page = await api.get("/api/v1/transactions", transactionPageSchema, {
+      valueSourceIds: accountId,
+      page: 1,
+      pageSize: limit,
+    });
+    return page.data;
   },
 
   async get(id) {
-    const { user } = await requireSession();
-    try {
-      return transactionSchema.parse(mockTransactions.get(user.id, id));
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 404) return null;
-      throw error;
-    }
+    const api = await getApi();
+    return nullIfNotFound(api.get(path(id), transactionSchema));
   },
 
   async create(input, repeatMonthly) {
-    const { user } = await requireSession();
-    return transactionSchema.parse(mockTransactions.create(user.id, input, repeatMonthly ?? undefined));
+    const api = await getApi();
+    return api.post("/api/v1/transactions", repeatMonthly ? { ...input, repeatMonthly } : input, transactionSchema);
   },
 
   async update(id, input) {
-    const { user } = await requireSession();
-    return transactionSchema.parse(mockTransactions.update(user.id, id, input));
+    const api = await getApi();
+    return api.put(path(id), input, transactionSchema);
   },
 
   async remove(id) {
-    const { user } = await requireSession();
-    mockTransactions.remove(user.id, id);
+    const api = await getApi();
+    await api.delete(path(id));
   },
 };
-
-export const transactionsDataSource: TransactionsDataSource = mockDataSource;

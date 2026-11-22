@@ -1,7 +1,6 @@
 import "server-only";
-import { ApiError } from "@/lib/api/errors";
-import { requireSession } from "@/lib/auth/session";
-import { mockRecurrences } from "@/lib/mock-backend";
+import { nullIfNotFound } from "@/lib/api/errors";
+import { getApi } from "@/lib/api/server";
 import {
   type Recurrence,
   type RecurrenceCreateInput,
@@ -21,43 +20,32 @@ export interface RecurrencesDataSource {
   remove(id: string): Promise<void>;
 }
 
-// TODO(back): as rotas de recorrências ainda não existem no finance-control-back. Ao implementá-las, troque por
-// getApi() mantendo o parse com os schemas (contrato: backend docs/02 e 07):
-//   list   → api.get("/api/v1/recurrences", recurrenceListSchema)
-//   get    → api.get(`/api/v1/recurrences/${id}`, recurrenceDetailSchema)  (404 → null)
-//   create → api.post("/api/v1/recurrences", input, recurrenceSchema)
-//   update → api.put(`/api/v1/recurrences/${id}`, input, recurrenceSchema)
-//   remove → api.delete(`/api/v1/recurrences/${id}`)
-const mockDataSource: RecurrencesDataSource = {
+const path = (id: string) => `/api/v1/recurrences/${encodeURIComponent(id)}`;
+
+// Contrato: finance-control-back docs/02 e 07 ("Despesas fixas").
+export const recurrencesDataSource: RecurrencesDataSource = {
   async list() {
-    const { user } = await requireSession();
-    return recurrenceListSchema.parse({ data: mockRecurrences.list(user.id) }).data;
+    const api = await getApi();
+    return (await api.get("/api/v1/recurrences", recurrenceListSchema)).data;
   },
 
   async get(id) {
-    const { user } = await requireSession();
-    try {
-      return recurrenceDetailSchema.parse(mockRecurrences.get(user.id, id));
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 404) return null;
-      throw error;
-    }
+    const api = await getApi();
+    return nullIfNotFound(api.get(path(id), recurrenceDetailSchema));
   },
 
   async create(input) {
-    const { user } = await requireSession();
-    return recurrenceSchema.parse(mockRecurrences.create(user.id, input));
+    const api = await getApi();
+    return api.post("/api/v1/recurrences", input, recurrenceSchema);
   },
 
   async update(id, input) {
-    const { user } = await requireSession();
-    return recurrenceSchema.parse(mockRecurrences.update(user.id, id, input));
+    const api = await getApi();
+    return api.put(path(id), input, recurrenceSchema);
   },
 
   async remove(id) {
-    const { user } = await requireSession();
-    mockRecurrences.remove(user.id, id);
+    const api = await getApi();
+    await api.delete(path(id));
   },
 };
-
-export const recurrencesDataSource: RecurrencesDataSource = mockDataSource;

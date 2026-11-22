@@ -30,6 +30,19 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Leitura de um recurso pela URL: inexistente ou de outro usuário (404) e id malformado (400) viram `null`,
+ * para a página mostrar "não encontrado" em vez da tela de erro.
+ */
+export async function nullIfNotFound<T>(request: Promise<T>): Promise<T | null> {
+  try {
+    return await request;
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 404 || error.status === 400)) return null;
+    throw error;
+  }
+}
+
 export async function toApiError(res: Response): Promise<ApiError> {
   try {
     const { error } = errorEnvelopeSchema.parse(await res.json());

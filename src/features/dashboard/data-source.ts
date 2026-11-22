@@ -1,19 +1,15 @@
 import "server-only";
-import { requireSession } from "@/lib/auth/session";
-import { mockDashboard } from "@/lib/mock-backend";
+import { getApi } from "@/lib/api/server";
 import { type DashboardSummary, dashboardSummarySchema } from "./schemas";
 
 export interface DashboardDataSource {
   summary(month: string): Promise<DashboardSummary>;
 }
 
-// TODO(back): a rota ainda não existe no finance-control-back. Ao implementá-la, troque por:
-//   api.get("/api/v1/dashboard/summary", dashboardSummarySchema, { month })   (contrato: backend docs/02)
-const mockDataSource: DashboardDataSource = {
+// Contrato: finance-control-back docs/02 ("Resumo do dashboard").
+export const dashboardDataSource: DashboardDataSource = {
   async summary(month) {
-    const { user } = await requireSession();
-    return dashboardSummarySchema.parse(mockDashboard.summary(user.id, month));
+    const api = await getApi();
+    return api.get("/api/v1/dashboard/summary", dashboardSummarySchema, { month });
   },
 };
-
-export const dashboardDataSource: DashboardDataSource = mockDataSource;
