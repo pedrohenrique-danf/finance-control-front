@@ -58,7 +58,7 @@ Versões fixadas no `package.json` (sem `^`/`latest`) e no `pnpm-lock.yaml`.
 | Componentes compartilhados      | `src/components/common` (Money, Field, FormSheet, CategoryIcon, MoneyInput, AmountField…)                 | 03         |
 | Layout                          | Responsivo: mobile com barra inferior e botão "+", desktop com barra lateral fixa; painéis sobem de baixo no mobile e abrem à direita no desktop | 08 |
 | Gráficos                        | SVG puro (sem biblioteca); cores validadas para daltonismo; tabela equivalente para leitores de tela        | 08         |
-| Camada de dados                 | Data source por feature; hoje `src/lib/mock-backend` (TODO(back)) até o backend ter as rotas              | 03         |
+| Camada de dados                 | Data source por feature chamando a API real com `getApi()` (cookie de sessão repassado ao backend)          | 03         |
 | `status` da transação           | `pendente`/`efetivada`; na tela "Pago"/"Recebido"/"Pendente"                                               | 06         |
 | Importação/exportação (RF07)    | CSV padrão Excel pt-BR (`;`, dd/mm/aaaa, 1.234,56) nos dois sentidos; PDF de fatura e extrato do Nubank lido **no backend** (pdfjs-dist), com pré-visualização antes de confirmar | 06, backend 07 |
 | Notificações                    | Geradas pelas ações (lançar, criar categoria/conta/despesa fixa, importar, exportar); lembretes ficam para depois do MVP | backend 07 |
@@ -107,13 +107,13 @@ pnpm test:e2e                      # Playwright (desktop + mobile); exige o back
 | Rota | Tela | Dados |
 | --- | --- | --- |
 | `/login`, `/register`, `/forgot-password`, `/reset-password` | Autenticação (RF01) | Better Auth real (redefinição depende do e-mail no backend) |
-| `/dashboard` | Início: saldo, cards, gráficos, próximas fixas, últimas transações (RF05) | mock-backend |
-| `/transactions` | Extrato com busca, filtros e "Carregar mais" (RF06); formulário global pelo "+" (RF03) | mock-backend |
-| `/categories` | Categorias com total do mês (RF02) | mock-backend |
-| `/recurrences`, `/recurrences/[id]` | Despesas fixas e agenda de 6 meses (RF04) | mock-backend |
-| `/accounts`, `/accounts/[id]` | Contas e cartões | mock-backend |
-| `/import-export` | Importar CSV/PDF Nubank e exportar CSV (RF07) | leitura do arquivo **real** no backend; confirmação, histórico e exportação no mock-backend |
-| `/notifications` | Notificações geradas pelas ações | mock-backend |
+| `/dashboard` | Início: saldo, cards, gráficos, próximas fixas, últimas transações (RF05) | API real |
+| `/transactions` | Extrato com busca, filtros e "Carregar mais" (RF06); formulário global pelo "+" (RF03) | API real |
+| `/categories` | Categorias com total do mês (RF02) | API real |
+| `/recurrences`, `/recurrences/[id]` | Despesas fixas e agenda de 6 meses (RF04) | API real |
+| `/accounts`, `/accounts/[id]` | Contas e cartões | API real |
+| `/import-export` | Importar CSV/PDF Nubank e exportar CSV (RF07) | API real (leitura do arquivo, confirmação, histórico; o CSV do mês baixa direto de `/api/v1/exports`) |
+| `/notifications` | Notificações geradas pelas ações | API real |
 | `/profile` | Nome e senha | Better Auth real |
 
 ## Índice
