@@ -9,6 +9,7 @@ import {
   quickToQuery,
 } from "./filters";
 import {
+  maxTransactionDate,
   type Transaction,
   toRepeatMonthly,
   toTransactionFormValues,
@@ -123,6 +124,16 @@ describe("formulário de transação ↔ contrato", () => {
     expect(toRepeatMonthly(values)).toEqual({ dueDay: 31, endDate: "2027-06-30" });
     expect(toRepeatMonthly({ ...values, endDate: "" })).toEqual({ dueDay: 31, endDate: null });
     expect(toRepeatMonthly({ ...values, repeat: false })).toBeNull();
+  });
+
+  it("data do lançamento: até 1 ano depois de hoje", () => {
+    expect(maxTransactionDate(new Date(2026, 10, 23))).toBe("2027-11-23");
+    expect(transactionFormSchema.safeParse({ ...form, date: maxTransactionDate() }).success).toBe(true);
+    const result = transactionFormSchema.safeParse({ ...form, date: "2999-01-01" });
+    expect(result.error?.issues[0]).toMatchObject({
+      path: ["date"],
+      message: "Use uma data até 1 ano a partir de hoje.",
+    });
   });
 
   it("repetir todo mês: data final antes da transação é rejeitada", () => {

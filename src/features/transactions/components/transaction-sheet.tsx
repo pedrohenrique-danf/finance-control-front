@@ -31,6 +31,7 @@ import {
   type CategoryOption,
   DESCRIPTION_MAX,
   dayOf,
+  maxTransactionDate,
   type Transaction,
   type TransactionFormValues,
   type TransactionType,
@@ -247,7 +248,11 @@ export function TransactionSheet({
             </Field>
 
             <Field label="Data" htmlFor="tx-date" error={errors.date?.message}>
-              <DateInput {...fieldA11y("tx-date", errors.date?.message)} {...form.register("date")} />
+              <DateInput
+                max={maxTransactionDate()}
+                {...fieldA11y("tx-date", errors.date?.message)}
+                {...form.register("date")}
+              />
             </Field>
 
             <Controller

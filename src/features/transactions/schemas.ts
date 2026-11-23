@@ -62,6 +62,16 @@ const isoDate = z
   .refine((v) => !Number.isNaN(new Date(`${v}T00:00:00`).getTime()), "Escolha uma data válida.")
   .refine((v) => v >= "2000-01-01", "Use uma data a partir de 01/01/2000.");
 
+/** Data máxima de um lançamento: 1 ano depois de hoje (mesma regra do backend, docs/07). */
+export function maxTransactionDate(now = new Date()): string {
+  const limit = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${limit.getFullYear()}-${pad(limit.getMonth() + 1)}-${pad(limit.getDate())}`;
+}
+
+/** Data de um lançamento: de 01/01/2000 até 1 ano à frente. */
+const transactionDate = isoDate.refine((v) => v <= maxTransactionDate(), "Use uma data até 1 ano a partir de hoje.");
+
 /** Corpo de POST/PUT /transactions (contrato). */
 export const transactionInputSchema = z
   .object({
@@ -69,7 +79,7 @@ export const transactionInputSchema = z
     nature: z.enum(transactionNatures).nullable(),
     description: z.string().trim().min(1).max(DESCRIPTION_MAX),
     amount: z.string().regex(/^\d{1,12}\.\d{2}$/),
-    date: isoDate,
+    date: transactionDate,
     status: z.enum(transactionStatuses),
     categoryId: z.uuid().nullable(),
     valueSourceId: z.uuid().nullable(),
@@ -97,7 +107,7 @@ export const transactionFormSchema = z
       .trim()
       .min(1, "Descreva a transação.")
       .max(DESCRIPTION_MAX, `Use no máximo ${DESCRIPTION_MAX} caracteres.`),
-    date: z.string().min(1, "Escolha uma data.").pipe(isoDate),
+    date: z.string().min(1, "Escolha uma data.").pipe(transactionDate),
     categoryId: z.string().min(1, "Escolha uma categoria."),
     valueSourceId: z.string().min(1, "Escolha uma conta ou cartão."),
     nature: z.enum(transactionNatures),

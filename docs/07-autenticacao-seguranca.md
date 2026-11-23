@@ -32,14 +32,14 @@ No Next 16 o antigo middleware chama-se **`src/proxy.ts`** e exporta a função 
 ### Tratamento de sessão expirada
 
 - Em Server Components/Actions, um `ApiError` 401 leva a `redirect("/login?next=<rota interna>")`.
-- `next` aceita **somente caminhos internos** que comecem com `/` e não com `//` (evita *open redirect*).
+- `next` aceita **somente caminhos internos**: começa com `/`, não com `//`, e não tem `\` nem caracteres de controle (alguns navegadores leem `/\site.com` como `//site.com`). Evita *open redirect*.
 
 ### Segurança do navegador
 
 - React escapa conteúdo por padrão. **Proibido** `dangerouslySetInnerHTML` com dado do usuário.
 - Nunca interpole dado do usuário em URLs, HTML ou scripts sem codificar.
 - Segredos: nada sensível em `NEXT_PUBLIC_*`, no código ou no bundle. `DATABASE_URL`, `BETTER_AUTH_SECRET`, credenciais do Google **não existem** neste repositório.
-- Cabeçalhos de segurança (`X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors`/`X-Frame-Options`) em `next.config.ts → headers()`. Política de CSP: **[PENDENTE DE DEFINIÇÃO]**.
+- Cabeçalhos de segurança (`X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors`/`X-Frame-Options`) em `next.config.ts → headers()`. CSP sem nonce, também em `headers()`: tudo restrito à própria origem (`default-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'`, `form-action 'self'`). `script-src` mantém `'unsafe-inline'` porque os scripts de hidratação do Next não têm nonce (nonce obrigaria renderização dinâmica em todas as páginas); `'unsafe-eval'` só em desenvolvimento.
 - Logs e telemetria sem senha, cookie ou valores financeiros completos.
 - Exibir `requestId` em erros 5xx; nunca stack trace.
 - Mensagens de login genéricas ("E-mail ou senha inválidos") — não revele se o e-mail existe.
@@ -97,7 +97,9 @@ O cadastro usa `authClient.signUp.email({ email, password, name })` e valida a s
 // src/features/auth/safe-next-path.ts
 export function safeNextPath(next: string | undefined, fallback = "/dashboard"): string {
   if (!next) return fallback;
-  return next.startsWith("/") && !next.startsWith("//") ? next : fallback;
+  if (!next.startsWith("/") || next.startsWith("//")) return fallback;
+  if (/[\\\u0000-\u001f\u007f]/.test(next)) return fallback; // "/\site.com" e caracteres de controle
+  return next;
 }
 ```
 
@@ -172,7 +174,7 @@ async headers() {
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
       { key: "X-Frame-Options", value: "DENY" },
-      // Content-Security-Policy: [PENDENTE DE DEFINIÇÃO]
+      { key: "Content-Security-Policy", value: contentSecurityPolicy }, // ver next.config.ts
     ],
   }];
 }
@@ -211,6 +213,6 @@ test("bloqueia rota privada sem sessão", async ({ page }) => {
 - [ ] Rotas privadas passam por middleware/proxy **e** `requireSession()` no layout.
 - [ ] 401 em servidor redireciona para `/login?next=` com caminho validado.
 - [ ] Nenhum segredo em `NEXT_PUBLIC_*` ou no código; nenhum `DATABASE_URL`.
-- [ ] Cabeçalhos de segurança configurados; CSP registrada como pendência ou definida.
+- [ ] Cabeçalhos de segurança configurados, incluindo a CSP.
 - [ ] Sem `dangerouslySetInnerHTML` com dados do usuário.
 - [ ] Teste E2E garante bloqueio de rota privada para anônimos.
