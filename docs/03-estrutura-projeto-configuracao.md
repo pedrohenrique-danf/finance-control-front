@@ -46,7 +46,7 @@ finance-control-front/
 │   │       ├── import-export/page.tsx    # RF07
 │   │       ├── import-export/export/route.ts  # modelo de planilha (?modelo=1); o CSV do mês vem de /api/v1/exports
 │   │       ├── notifications/page.tsx
-│   │       └── profile/page.tsx          # nome e senha (Better Auth)
+│   │       └── profile/page.tsx          # nome e senha (Better Auth) + avisos no app (notifications)
 │   ├── features/                         # um diretório por domínio
 │   │   ├── auth/                         # login, cadastro, senha, perfil
 │   │   ├── accounts/

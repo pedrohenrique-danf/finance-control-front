@@ -60,3 +60,29 @@ test("exportar CSV do mês no formato da importação", async ({ page }) => {
   expect(content.charCodeAt(0)).toBe(0xfeff);
   expect(content).toContain("data;descricao;valor;tipo;natureza;situacao;categoria;conta");
 });
+
+test("preferências: desligar categorias para de gerar o aviso; atalho a partir das notificações", async ({ page }) => {
+  await registerUser(page);
+  await page.goto("/notifications");
+  await page.getByRole("link", { name: "Escolher avisos" }).click();
+  await expect(page).toHaveURL(/\/profile#avisos$/);
+
+  const categorias = page.getByRole("switch", { name: "Categorias" });
+  await expect(categorias).toBeChecked();
+  // A tela é otimista (muda na hora); espera a Server Action terminar de gravar antes de recarregar.
+  const saved = page.waitForResponse((r) => r.request().method() === "POST" && r.url().includes("/profile"));
+  await categorias.click();
+  await expect(categorias).not.toBeChecked();
+  expect((await saved).ok()).toBe(true);
+  await page.reload(); // gravado no backend
+  await expect(page.getByRole("switch", { name: "Categorias" })).not.toBeChecked();
+
+  await page.goto("/categories");
+  await page.getByRole("button", { name: "Nova categoria" }).filter({ visible: true }).first().click();
+  await page.getByRole("dialog").getByLabel("Nome").fill("Sem aviso E2E");
+  await page.getByRole("button", { name: "Salvar" }).click();
+  await expect(toast(page, "Categoria criada.")).toBeVisible();
+
+  await page.goto("/notifications");
+  await expect(page.getByRole("heading", { name: "Nenhuma notificação" })).toBeVisible();
+});

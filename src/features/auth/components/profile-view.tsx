@@ -119,8 +119,11 @@ function PasswordForm() {
   );
 }
 
-/** Perfil e configurações: nome e senha pelo Better Auth (sem dados do domínio). */
-export function ProfileView({ user }: { user: { name: string; email: string } }) {
+/**
+ * Perfil e configurações: nome e senha pelo Better Auth. `settings` recebe as configurações de outras
+ * features (ex.: avisos), compostas pela página.
+ */
+export function ProfileView({ user, settings }: { user: { name: string; email: string }; settings?: React.ReactNode }) {
   return (
     <PageSection title="Perfil e configurações" description="Seus dados de acesso ao FinanceControl.">
       <div className="flex items-center gap-4 rounded-3xl bg-balance p-5 text-primary-foreground shadow-card">
@@ -134,6 +137,7 @@ export function ProfileView({ user }: { user: { name: string; email: string } })
         <NameForm name={user.name} />
         <PasswordForm />
       </div>
+      {settings}
       <div className={card}>
         <SectionHeader title="Sessão" />
         <p className="text-sm text-muted-foreground">

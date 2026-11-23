@@ -48,3 +48,22 @@ test("link de redefinição inválido oferece pedir outro", async ({ page }) => 
   await page.getByRole("link", { name: "Pedir novo link" }).click();
   await expect(page).toHaveURL(/\/forgot-password$/);
 });
+
+test("esqueci a senha: o backend aceita o pedido e a tela confirma o envio", async ({ page }) => {
+  const { email } = await registerUser(page);
+  await page.goto("/profile");
+  await page.getByRole("main").getByRole("button", { name: "Sair" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+
+  await page.goto("/forgot-password");
+  await page.getByLabel("E-mail").fill(email);
+  await page.getByRole("button", { name: "Enviar link" }).click();
+  await expect(page.getByRole("heading", { name: "Enviamos um link para seu e-mail" })).toBeVisible();
+  await expect(page.getByRole("status")).toContainText(email);
+});
+
+test("link de redefinição inválido ou expirado pede um novo link", async ({ page }) => {
+  await page.goto("/reset-password?error=INVALID_TOKEN");
+  await expect(page.getByRole("heading", { name: "Link inválido ou expirado" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Pedir novo link" })).toHaveAttribute("href", "/forgot-password");
+});

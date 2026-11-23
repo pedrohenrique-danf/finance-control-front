@@ -1,24 +1,36 @@
 "use client";
 
-import { BellRing, CalendarClock, CheckCheck, Download, Info, type LucideIcon, Upload } from "lucide-react";
+import {
+  ArrowLeftRight,
+  CheckCheck,
+  Download,
+  type LucideIcon,
+  Repeat,
+  Settings2,
+  Tag,
+  Upload,
+  WalletCards,
+} from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSection } from "@/components/layout/page-section";
 import { useShell } from "@/components/layout/shell-context";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { formatDate, todayIso, toIsoDate } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 import { markAllNotificationsReadAction, markNotificationReadAction } from "../actions";
 import type { Notification, NotificationType } from "../schemas";
 
 const ICONS: Record<NotificationType, { icon: LucideIcon; bubble: string }> = {
-  sistema: { icon: Info, bubble: "bg-muted text-primary" },
+  transacao_registrada: { icon: ArrowLeftRight, bubble: "bg-muted text-primary" },
+  recorrencia_criada: { icon: Repeat, bubble: "bg-alert-soft text-alert-strong" },
+  categoria_criada: { icon: Tag, bubble: "bg-muted text-primary" },
+  conta_criada: { icon: WalletCards, bubble: "bg-muted text-primary" },
   importacao_concluida: { icon: Upload, bubble: "bg-income-soft text-income" },
   exportacao_pronta: { icon: Download, bubble: "bg-accent-soft text-foreground" },
-  vencimento_despesa: { icon: CalendarClock, bubble: "bg-alert-soft text-alert-strong" },
-  lembrete_registro: { icon: BellRing, bubble: "bg-alert-soft text-alert-strong" },
 };
 
 const time = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -83,11 +95,16 @@ export function NotificationsView({ notifications, unread }: { notifications: No
             ? "Nenhuma notificação nova."
             : `${unreadNow} ${unreadNow === 1 ? "notificação não lida" : "notificações não lidas"}`}
         </p>
-        {unread > 0 && unreadNow > 0 ? (
-          <Button variant="ghost" className="text-primary" onClick={markAll}>
-            <CheckCheck aria-hidden /> Marcar todas como lidas
-          </Button>
-        ) : null}
+        <div className="flex flex-wrap items-center justify-end gap-1">
+          {unread > 0 && unreadNow > 0 ? (
+            <Button variant="ghost" className="text-primary" onClick={markAll}>
+              <CheckCheck aria-hidden /> Marcar todas como lidas
+            </Button>
+          ) : null}
+          <Link href="/profile#avisos" className={buttonVariants({ variant: "ghost", className: "text-primary" })}>
+            <Settings2 aria-hidden /> Escolher avisos
+          </Link>
+        </div>
       </div>
 
       {items.length === 0 ? (
