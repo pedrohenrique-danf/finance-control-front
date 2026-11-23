@@ -1,9 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { newTransactionButton, registerUser, toast } from "./helpers";
 
-/** Valor do card "Despesas variáveis" do início, em centavos. */
+/** Valor do card "Despesas variáveis" do início, em centavos (0 no mês vazio de um usuário novo). */
 async function variableExpensesCents(page: import("@playwright/test").Page): Promise<number> {
   await page.goto("/dashboard");
+  const empty = page.getByRole("heading", { name: "Seu mês começa aqui" });
+  const summary = page.getByRole("region", { name: "Resumo do mês" });
+  await expect(empty.or(summary)).toBeVisible();
+  if (await empty.isVisible()) return 0;
   const card = page
     .getByRole("region", { name: "Resumo do mês" })
     .locator("div")

@@ -1,7 +1,5 @@
 import "server-only";
 import { getApi } from "@/lib/api/server";
-import { requireSession } from "@/lib/auth/session";
-import { mockDataExchange } from "@/lib/mock-backend";
 import {
   type ConfirmImportInput,
   type DataOperation,
@@ -11,12 +9,15 @@ import {
   importPreviewSchema,
 } from "./schemas";
 
+/**
+ * Importar e exportar (backend docs/07, "Importar e exportar"). A exportação não passa por aqui: a tela aponta
+ * direto para /api/v1/exports/transactions (rewrite do Next, mesma origem, cookie de sessão).
+ */
 export interface DataExchangeDataSource {
-  /** Real: o backend lê o CSV/PDF (POST /api/v1/imports/preview). */
+  /** O backend lê o CSV/PDF (POST /api/v1/imports/preview), sem gravar. */
   preview(file: File): Promise<ImportPreview>;
   confirm(input: ConfirmImportInput): Promise<DataOperation>;
   history(): Promise<DataOperation[]>;
-  exportCsv(month: string): Promise<{ fileName: string; content: string }>;
 }
 
 export const dataExchangeDataSource: DataExchangeDataSource = {
@@ -27,22 +28,13 @@ export const dataExchangeDataSource: DataExchangeDataSource = {
     return api.postForm("/api/v1/imports/preview", form, importPreviewSchema);
   },
 
-  // TODO(back): as rotas abaixo ainda não existem no finance-control-back (contrato: docs/07). Ao implementá-las:
-  //   confirm   → api.post("/api/v1/imports", input, dataOperationSchema)
-  //   history   → api.get("/api/v1/data-operations", dataOperationListSchema)
-  //   exportCsv → link direto para /api/v1/exports/transactions?month=&format=csv (rewrite do Next)
   async confirm(input) {
-    const { user } = await requireSession();
-    return dataOperationSchema.parse(mockDataExchange.confirmImport(user.id, input));
+    const api = await getApi();
+    return api.post("/api/v1/imports", input, dataOperationSchema);
   },
 
   async history() {
-    const { user } = await requireSession();
-    return dataOperationListSchema.parse({ data: mockDataExchange.history(user.id) }).data;
-  },
-
-  async exportCsv(month) {
-    const { user } = await requireSession();
-    return mockDataExchange.exportCsv(user.id, month);
+    const api = await getApi();
+    return (await api.get("/api/v1/data-operations", dataOperationListSchema)).data;
   },
 };

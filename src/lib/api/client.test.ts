@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createApiClient } from "./client";
+import { ApiError, nullIfNotFound } from "./errors";
 
 const itemSchema = z.object({ id: z.string() });
 
@@ -64,5 +65,16 @@ describe("postForm", () => {
     await expect(api.postForm("/api/v1/imports/preview", form, itemSchema)).resolves.toEqual({ id: "1" });
     expect(captured?.body).toBe(form);
     expect(new Headers(captured?.headers).get("Content-Type")).toBeNull();
+  });
+});
+
+describe("nullIfNotFound", () => {
+  it("404 e 400 (id malformado na URL) viram null; outros erros sobem", async () => {
+    await expect(nullIfNotFound(Promise.reject(new ApiError(404, "NOT_FOUND", "x")))).resolves.toBeNull();
+    await expect(nullIfNotFound(Promise.reject(new ApiError(400, "VALIDATION_ERROR", "x")))).resolves.toBeNull();
+    await expect(nullIfNotFound(Promise.reject(new ApiError(500, "INTERNAL_ERROR", "x")))).rejects.toMatchObject({
+      status: 500,
+    });
+    await expect(nullIfNotFound(Promise.resolve({ id: "1" }))).resolves.toEqual({ id: "1" });
   });
 });

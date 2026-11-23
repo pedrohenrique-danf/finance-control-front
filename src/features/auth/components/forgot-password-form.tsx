@@ -21,8 +21,8 @@ export function ForgotPasswordForm() {
   const { errors, isSubmitting } = form.formState;
 
   async function onSubmit(values: ForgotPasswordFormValues) {
-    // TODO(back): o Better Auth do backend ainda não tem `emailAndPassword.sendResetPassword` (envio de e-mail).
-    // Até lá esta chamada falha e a tela mostra o erro. O link do e-mail leva a /reset-password?token=…
+    // O backend envia o e-mail (SMTP; em dev sem SMTP, o link sai no log do backend). O link do e-mail passa
+    // pelo Better Auth, que valida o token e redireciona para /reset-password?token=… (ou ?error=…).
     const { error } = await authClient.requestPasswordReset({
       email: values.email,
       redirectTo: `${window.location.origin}/reset-password`,

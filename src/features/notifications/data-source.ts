@@ -1,41 +1,57 @@
 import "server-only";
-import { requireSession } from "@/lib/auth/session";
-import { mockNotifications } from "@/lib/mock-backend";
-import { type NotificationPage, notificationPageSchema } from "./schemas";
+import { z } from "zod";
+import { getApi } from "@/lib/api/server";
+import {
+  type NotificationPage,
+  type NotificationPreference,
+  type NotificationType,
+  notificationPageSchema,
+  notificationPreferenceListSchema,
+  notificationPreferenceSchema,
+  notificationSchema,
+} from "./schemas";
 
 export interface NotificationsDataSource {
   list(page: number, pageSize: number): Promise<NotificationPage>;
   unreadCount(): Promise<number>;
   markRead(id: string): Promise<void>;
   markAllRead(): Promise<void>;
+  /** Todos os tipos, com `active` (sem preferência gravada = ativo). */
+  listPreferences(): Promise<NotificationPreference[]>;
+  setPreference(type: NotificationType, active: boolean): Promise<NotificationPreference>;
 }
 
-// TODO(back): as rotas de notificações ainda não existem no finance-control-back. Ao implementá-las, troque por
-// getApi() (contrato: backend docs/07):
-//   list        → api.get("/api/v1/notifications", notificationPageSchema, { page, pageSize })
-//   unreadCount → (list com pageSize=1).meta.unread
-//   markRead    → api.put(`/api/v1/notifications/${id}`, { status: "lida" }, notificationSchema)
-//   markAllRead → api.put("/api/v1/notifications", { status: "lida" }, …)
-const mockDataSource: NotificationsDataSource = {
+const markAllReadSchema = z.object({ updated: z.number() });
+
+// Contrato: finance-control-back docs/07 ("Notificações").
+export const notificationsDataSource: NotificationsDataSource = {
   async list(page, pageSize) {
-    const { user } = await requireSession();
-    return notificationPageSchema.parse(mockNotifications.list(user.id, page, pageSize));
+    const api = await getApi();
+    return api.get("/api/v1/notifications", notificationPageSchema, { page, pageSize });
   },
 
   async unreadCount() {
-    const { user } = await requireSession();
-    return mockNotifications.unreadCount(user.id);
+    const api = await getApi();
+    return (await api.get("/api/v1/notifications", notificationPageSchema, { page: 1, pageSize: 1 })).meta.unread;
   },
 
   async markRead(id) {
-    const { user } = await requireSession();
-    mockNotifications.markRead(user.id, id);
+    const api = await getApi();
+    await api.put(`/api/v1/notifications/${encodeURIComponent(id)}`, { status: "lida" }, notificationSchema);
   },
 
   async markAllRead() {
-    const { user } = await requireSession();
-    mockNotifications.markAllRead(user.id);
+    const api = await getApi();
+    await api.put("/api/v1/notifications", { status: "lida" }, markAllReadSchema);
+  },
+
+  async listPreferences() {
+    const api = await getApi();
+    return (await api.get("/api/v1/notification-preferences", notificationPreferenceListSchema)).data;
+  },
+
+  async setPreference(type, active) {
+    const api = await getApi();
+    return api.put(`/api/v1/notification-preferences/${type}`, { active }, notificationPreferenceSchema);
   },
 };
-
-export const notificationsDataSource: NotificationsDataSource = mockDataSource;

@@ -77,6 +77,18 @@ describe("filtros do extrato na URL", () => {
     expect(parsePage({ page: "999" })).toBe(MAX_PAGE);
   });
 
+  it("só repassa ao backend ids UUID e datas que existem no calendário (evita 400)", () => {
+    const filters = parseTransactionFilters(
+      {
+        categorias: `${CAT},${"-".repeat(36)},${"a".repeat(36)}`,
+        de: "2026-02-30",
+        ate: "1999-12-31",
+      },
+      NOW,
+    );
+    expect(filters).toMatchObject({ categoryIds: [CAT], from: null, to: null });
+  });
+
   it("chips viram tipo ou natureza do banco", () => {
     expect(quickToQuery("receitas")).toEqual({ type: "receita" });
     expect(quickToQuery("fixas")).toEqual({ nature: "fixa" });

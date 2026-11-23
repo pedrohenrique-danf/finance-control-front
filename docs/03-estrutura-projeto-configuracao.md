@@ -44,9 +44,9 @@ finance-control-front/
 │   │       ├── accounts/page.tsx         # contas e cartões (fontes_valor)
 │   │       ├── accounts/[id]/page.tsx
 │   │       ├── import-export/page.tsx    # RF07
-│   │       ├── import-export/export/route.ts  # download do CSV (TODO(back): /api/v1/exports)
+│   │       ├── import-export/export/route.ts  # modelo de planilha (?modelo=1); o CSV do mês vem de /api/v1/exports
 │   │       ├── notifications/page.tsx
-│   │       └── profile/page.tsx          # nome e senha (Better Auth)
+│   │       └── profile/page.tsx          # nome e senha (Better Auth) + avisos no app (notifications)
 │   ├── features/                         # um diretório por domínio
 │   │   ├── auth/                         # login, cadastro, senha, perfil
 │   │   ├── accounts/
@@ -67,7 +67,6 @@ finance-control-front/
 │   │   ├── actions/                      # ActionResult, toActionResult, validationFailure
 │   │   ├── forms/                        # applyActionError (erros da action → campos do RHF)
 │   │   ├── format/                       # money.ts, date.ts
-│   │   ├── mock-backend/                 # backend simulado (TODO(back)) — ver abaixo
 │   │   └── search-params.ts
 │   └── proxy.ts                          # "middleware" do Next 16 (verificação otimista de sessão)
 ├── tests/
@@ -89,23 +88,28 @@ finance-control-front/
 ```
 features/categories/
 ├── index.ts                     # API pública da feature
-├── data-source.ts               # interface + implementação (hoje: mock-backend; depois: getApi())
+├── data-source.ts               # interface + implementação com getApi() (API real)
 ├── actions.ts                   # Server Actions (finas): validam com Zod e chamam o data source
 ├── schemas.ts                   # espelho do contrato (// SYNC:) + schema do formulário
 ├── components/                  # CategoriesView, CategorySheet...
 └── categories.test.ts
 ```
 
-### Camada de dados enquanto o backend não tem as rotas de domínio
+### Camada de dados
 
-Cada feature expõe um **data source** (interface) que as páginas e as Server Actions usam. Hoje a implementação
-chama `src/lib/mock-backend` — um backend simulado **em memória, por usuário, só no servidor**, que segue o contrato
-de `finance-control-back/docs` (02 e 07): mesmos campos, enums do banco, erros 400/404/409 por campo e regras como
-RNF02, natureza só em despesas e materialização de recorrências. Cada data source tem um comentário `TODO(back)`
-com as chamadas `getApi()` equivalentes; ao implementar uma rota no backend, troca-se só essa implementação.
+Cada feature expõe um **data source** (interface) que as páginas e as Server Actions usam. A implementação chama a
+API do `finance-control-back` com `getApi()` (uma instância por requisição, repassando o cookie de sessão) e valida
+cada resposta com os schemas Zod da feature (contrato: `finance-control-back/docs` 02 e 07).
 
-- O estado some ao reiniciar o `next dev`; cada usuário novo recebe os dados de demonstração do protótipo.
-- Já é real: autenticação (Better Auth) e a leitura de arquivos de importação (`POST /api/v1/imports/preview`).
+- Leitura de um recurso pela URL: 404 (inexistente ou de outro usuário) e 400 (id malformado) viram `null`
+  (`nullIfNotFound` em `lib/api/errors.ts`), e a página mostra "não encontrado".
+- Listas pedidas pelo layout e pela página na mesma requisição (categorias, contas) são memoizadas com `cache` do React.
+- Filtros vindos da URL só chegam ao backend se forem válidos (UUID, data de calendário real), evitando 400.
+- O CSV do mês é baixado direto de `/api/v1/exports/transactions` (rewrite do Next, mesma origem, cookie junto).
+- Usuário novo começa com as categorias padrão e a conta "Carteira" (criadas pelo backend no cadastro). Para telas
+  com dados, rode `pnpm db:seed` no backend e entre com `demo@financecontrol.local` (backend docs/06).
+- Os e2e exigem o backend rodando com banco; o Playwright usa 60 s por teste e 15 s por asserção por causa da
+  latência do banco remoto.
 
 Regras: `app/` apenas importa de `features/*/index.ts`, `components/` e `lib/`. Uma feature **não importa** arquivos internos de outra. `components/` e `lib/` **não importam** de `features/` nem de `app/`.
 

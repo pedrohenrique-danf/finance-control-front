@@ -95,6 +95,14 @@ export interface ExchangeAccount {
   active: boolean;
 }
 
+/**
+ * Download do CSV do mês direto do backend (GET /api/v1/exports/transactions): o rewrite do Next mantém a mesma
+ * origem, então o cookie de sessão vai junto. O backend registra a operação e gera a notificação.
+ */
+export function exportCsvHref(month: string): string {
+  return `/api/v1/exports/transactions?${new URLSearchParams({ month, format: "csv" })}`;
+}
+
 export const SOURCE_LABELS: Record<ImportSource, string> = {
   csv: "Planilha CSV",
   nubank_fatura: "Fatura do cartão Nubank",
