@@ -56,7 +56,8 @@ Não adicione biblioteca fora desta tabela sem autorização.
 
 Regras:
 
-- E2E exige backend em execução com banco **de teste** **[PENDENTE DE DEFINIÇÃO]** — nunca produção.
+- E2E exige o backend rodando no banco **de teste**: no backend, `pnpm dev:test` (branch Neon `teste`, via `.env.test`).
+  Nunca rode o E2E com o backend em `pnpm dev` (banco de desenvolvimento) nem contra produção.
 - Cada teste cria seu próprio usuário (e-mail único) e não depende de ordem.
 - Localize elementos por papel/rótulo (`getByRole`, `getByLabel`), nunca por classe CSS.
 - Execute os fluxos em **dois projetos**: desktop e mobile (RNF01).
