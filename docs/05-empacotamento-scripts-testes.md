@@ -37,7 +37,7 @@ Não adicione biblioteca fora desta tabela sem autorização.
 | `dev` | desenvolvimento | `next dev` |
 | `build` | build de produção | `next build` |
 | `start` | produção | `next start` |
-| `typecheck` | tipos | `tsc --noEmit` |
+| `typecheck` | tipos (gera antes os tipos de rota, `PageProps`/`LayoutProps`, que um checkout limpo não tem) | `next typegen && tsc --noEmit` |
 | `lint` | análise estática | `biome lint .` |
 | `format` / `format:check` | formatação | `biome format --write .` / `biome format .` |
 | `check` | lint + formatação + organização de imports | `biome check .` |
@@ -82,7 +82,7 @@ Regras:
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "lint": "biome lint .",
     "test": "vitest run",
     "test:e2e": "playwright test",
