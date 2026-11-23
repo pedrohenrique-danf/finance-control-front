@@ -71,7 +71,7 @@ Versões fixadas no `package.json` (sem `^`/`latest`) e no `pnpm-lock.yaml`.
 | 2   | Como sincronizar contratos (schemas Zod) entre os dois repositórios                                         | 02, 06     |
 | 3   | Ferramenta de teste de componentes                                                                          | 05         |
 | 4   | Ferramenta de acessibilidade automatizada                                                                   | 08         |
-| 5   | Hospedagem (Vercel a confirmar), plataforma de CI e meta de cobertura                                       | 05         |
+| 5   | Meta mínima de cobertura (CI no GitHub Actions; hospedagem na Vercel)                                       | 05         |
 | 6   | Páginas de termos de uso e política de privacidade (o cadastro exige o aceite)                             | 07         |
 | 7   | Materialização dos meses futuros das despesas fixas (job diário × na leitura) — backend                     | backend 07 |
 

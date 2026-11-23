@@ -37,7 +37,7 @@ Não adicione biblioteca fora desta tabela sem autorização.
 | `dev` | desenvolvimento | `next dev` |
 | `build` | build de produção | `next build` |
 | `start` | produção | `next start` |
-| `typecheck` | tipos | `tsc --noEmit` |
+| `typecheck` | tipos (gera antes os tipos de rota, `PageProps`/`LayoutProps`, que um checkout limpo não tem) | `next typegen && tsc --noEmit` |
 | `lint` | análise estática | `biome lint .` |
 | `format` / `format:check` | formatação | `biome format --write .` / `biome format .` |
 | `check` | lint + formatação + organização de imports | `biome check .` |
@@ -64,7 +64,9 @@ Regras:
 - Execute os fluxos em **dois projetos**: desktop e mobile (RNF01).
 - Teste os requisitos: RNF02 (categoria excluída preserva a transação), RNF04 (validação), proteção de rotas (RNF03).
 - Cobertura mínima: **[PENDENTE DE DEFINIÇÃO]**.
-- CI mínima: `typecheck → lint → test → build → test:e2e`. Plataforma **[PENDENTE DE DEFINIÇÃO]**.
+- CI: GitHub Actions (`.github/workflows/ci.yml`), em todo pull request e push na `main`: `typecheck → lint →
+  test:coverage → build`. O E2E fica fora da CI (precisa do backend, que está em outro repositório): rode-o
+  localmente. A cobertura sai só como relatório (meta mínima a definir).
 
 ## Exemplos de código
 
@@ -80,7 +82,7 @@ Regras:
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "lint": "biome lint .",
     "test": "vitest run",
     "test:e2e": "playwright test",
