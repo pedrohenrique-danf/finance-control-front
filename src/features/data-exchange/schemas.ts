@@ -6,7 +6,7 @@ export const ACCEPTED_EXTENSIONS = [".csv", ".txt", ".ofx", ".qfx", ".pdf"] as c
 /** Valor do `accept` do campo de arquivo. */
 export const ACCEPT_ATTRIBUTE = [...ACCEPTED_EXTENSIONS, "text/csv", "application/pdf", "application/x-ofx"].join(",");
 
-export const importSources = ["csv", "csv_banco", "ofx", "nubank_fatura", "nubank_extrato"] as const;
+export const importSources = ["csv", "csv_banco", "ofx", "nubank_fatura", "nubank_extrato", "picpay_extrato"] as const;
 export type ImportSource = (typeof importSources)[number];
 export const importFormats = ["csv", "pdf", "ofx"] as const;
 export type ImportFormat = (typeof importFormats)[number];
@@ -118,6 +118,7 @@ export const SOURCE_LABELS: Record<ImportSource, string> = {
   ofx: "Arquivo OFX",
   nubank_fatura: "Fatura do cartão Nubank",
   nubank_extrato: "Extrato da conta Nubank",
+  picpay_extrato: "Extrato da conta PicPay",
 };
 
 const fold = (text: string) =>

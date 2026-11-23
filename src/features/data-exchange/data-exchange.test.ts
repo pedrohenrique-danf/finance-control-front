@@ -59,6 +59,7 @@ describe("sugestões da revisão de importação", () => {
     expect(suggestAccount(preview("ofx", { institution: "Itaú", kind: "cartao" }), accounts)).toBe("n2");
     // sem banco nem tipo: a primeira ativa
     expect(suggestAccount(preview("csv_banco"), accounts)).toBe("c1");
+    expect(suggestAccount(preview("picpay_extrato", { institution: "PicPay", kind: "conta" }), accounts)).toBe("n1");
   });
 
   it("título da revisão mostra tipo de documento e banco quando identificados", () => {

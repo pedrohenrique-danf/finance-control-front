@@ -29,8 +29,8 @@ export function PrivacyContent() {
         </li>
         <li>
           <strong>Importações e exportações:</strong> o nome do arquivo, a data e quantas linhas entraram. O conteúdo do
-          arquivo (CSV, OFX ou PDF) é lido na hora para mostrar a pré-visualização e não é guardado; só as linhas que você
-          confirma viram lançamentos.
+          arquivo (CSV, OFX ou PDF) é lido na hora para mostrar a pré-visualização e não é guardado; só as linhas que
+          você confirma viram lançamentos.
         </li>
         <li>
           <strong>Avisos:</strong> as notificações geradas pelas suas ações e quais tipos você escolheu receber.

@@ -81,7 +81,7 @@ function ImportCard({ onPreview }: { onPreview: (preview: ImportPreview) => void
         <span className="text-xs text-muted-foreground">
           {file
             ? `${(file.size / 1024).toFixed(0)} KB`
-            : "Extrato ou fatura em OFX ou CSV de qualquer banco, ou PDF do Nubank · até 5 MB"}
+            : "Extrato ou fatura em OFX ou CSV de qualquer banco, ou PDF do Nubank e do PicPay · até 5 MB"}
         </span>
         <input
           ref={inputRef}
@@ -105,7 +105,7 @@ function ImportCard({ onPreview }: { onPreview: (preview: ImportPreview) => void
         <p className="mt-1">
           <strong className="text-foreground">Do banco:</strong> no app ou internet banking, exporte o extrato ou a
           fatura em OFX (também chamado de Money ou Quicken) ou em CSV. O banco e as colunas são reconhecidos sozinhos.
-          Do Nubank, o PDF também funciona.
+          Do Nubank e do PicPay, o PDF também funciona.
         </p>
         <p className="mt-2">
           <strong className="text-foreground">Planilha própria:</strong>
