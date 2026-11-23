@@ -64,7 +64,9 @@ Regras:
 - Execute os fluxos em **dois projetos**: desktop e mobile (RNF01).
 - Teste os requisitos: RNF02 (categoria excluída preserva a transação), RNF04 (validação), proteção de rotas (RNF03).
 - Cobertura mínima: **[PENDENTE DE DEFINIÇÃO]**.
-- CI mínima: `typecheck → lint → test → build → test:e2e`. Plataforma **[PENDENTE DE DEFINIÇÃO]**.
+- CI: GitHub Actions (`.github/workflows/ci.yml`), em todo pull request e push na `main`: `typecheck → lint →
+  test:coverage → build`. O E2E fica fora da CI (precisa do backend, que está em outro repositório): rode-o
+  localmente. A cobertura sai só como relatório (meta mínima a definir).
 
 ## Exemplos de código
 

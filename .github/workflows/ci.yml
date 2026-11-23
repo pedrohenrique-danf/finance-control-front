@@ -1,0 +1,46 @@
+# CI do frontend: roda em todo pull request e em push na main.
+# O E2E fica fora: precisa do backend rodando (outro repositório). Rode-o localmente (docs/05).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      BACKEND_URL: http://localhost:3001
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4 # versão do pnpm vem do "packageManager" do package.json
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Tipagem
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Testes unitários (com relatório de cobertura, sem meta mínima)
+        run: pnpm test:coverage
+
+      - name: Build
+        run: pnpm build
