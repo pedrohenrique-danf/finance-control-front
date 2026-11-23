@@ -40,7 +40,7 @@ O cliente **nunca** é a única barreira.
 
 - Contrato: `"YYYY-MM-DD"`. **Nunca** `new Date("2026-11-05")` (interpreta como UTC e pode exibir o dia anterior). Formate dividindo a string.
 - Mês corrente: usar data local do navegador/servidor, formato `YYYY-MM`.
-- Limites de datas retroativas são os do backend **[PENDENTE DE DEFINIÇÃO]**; o frontend só reflete o que o backend definir.
+- Data de um lançamento: de 01/01/2000 até 1 ano depois de hoje (regra do backend, docs/07). O formulário repete a regra (`maxTransactionDate` e o `max` do campo de data); filtros e o término das despesas fixas não têm limite futuro.
 
 ### Formulários
 

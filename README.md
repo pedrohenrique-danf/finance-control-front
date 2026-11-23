@@ -70,11 +70,10 @@ Versões fixadas no `package.json` (sem `^`/`latest`) e no `pnpm-lock.yaml`.
 | 1   | Mesma origem (proxy/rewrites para o backend — **recomendado** e já configurado em `next.config.ts`) × origens distintas | 02, 03, 07 |
 | 2   | Como sincronizar contratos (schemas Zod) entre os dois repositórios                                         | 02, 06     |
 | 3   | Ferramenta de teste de componentes                                                                          | 05         |
-| 4   | Política de CSP                                                                                             | 07         |
-| 5   | Ferramenta de acessibilidade automatizada                                                                   | 08         |
-| 6   | Hospedagem (Vercel a confirmar), plataforma de CI e meta de cobertura                                       | 05         |
-| 7   | Páginas de termos de uso e política de privacidade (o cadastro exige o aceite)                             | 07         |
-| 8   | Materialização dos meses futuros das despesas fixas (job diário × na leitura) — backend                     | backend 07 |
+| 4   | Ferramenta de acessibilidade automatizada                                                                   | 08         |
+| 5   | Hospedagem (Vercel a confirmar), plataforma de CI e meta de cobertura                                       | 05         |
+| 6   | Páginas de termos de uso e política de privacidade (o cadastro exige o aceite)                             | 07         |
+| 7   | Materialização dos meses futuros das despesas fixas (job diário × na leitura) — backend                     | backend 07 |
 
 ## Setup rápido
 
