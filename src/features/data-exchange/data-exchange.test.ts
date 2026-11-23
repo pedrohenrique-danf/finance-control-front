@@ -5,6 +5,7 @@ import {
   type ImportRow,
   matchAccount,
   matchCategory,
+  previewTitle,
   suggestAccount,
 } from "./schemas";
 
@@ -14,8 +15,12 @@ const accounts = [
   { id: "n2", name: "Roxinho", type: "cartao_credito", institution: "Nubank", active: true },
   { id: "i1", name: "Inter", type: "cartao_credito", institution: "Banco Inter", active: true },
 ];
-const preview = (source: ImportPreview["source"]): ImportPreview => ({
+const preview = (source: ImportPreview["source"], patch: Partial<ImportPreview> = {}): ImportPreview => ({
   source,
+  format: source === "csv" || source === "csv_banco" ? "csv" : source === "ofx" ? "ofx" : "pdf",
+  institution: source.startsWith("nubank") ? "Nubank" : null,
+  kind: source === "nubank_fatura" ? "cartao" : source === "nubank_extrato" ? "conta" : null,
+  ...patch,
   fileName: "x",
   period: null,
   rows: [],
@@ -45,6 +50,24 @@ describe("sugestões da revisão de importação", () => {
     expect(
       suggestAccount(preview("nubank_fatura"), [{ ...accounts[3], active: true } as (typeof accounts)[number]]),
     ).toBe("i1");
+  });
+
+  it("conta: banco identificado no OFX/CSV ('Inter' casa com 'Banco Inter'), tipo pelo kind", () => {
+    expect(suggestAccount(preview("ofx", { institution: "Inter", kind: "cartao" }), accounts)).toBe("i1");
+    expect(suggestAccount(preview("csv_banco", { institution: "Nubank", kind: "conta" }), accounts)).toBe("n1");
+    // banco sem conta cadastrada: a primeira do tipo certo
+    expect(suggestAccount(preview("ofx", { institution: "Itaú", kind: "cartao" }), accounts)).toBe("n2");
+    // sem banco nem tipo: a primeira ativa
+    expect(suggestAccount(preview("csv_banco"), accounts)).toBe("c1");
+  });
+
+  it("título da revisão mostra tipo de documento e banco quando identificados", () => {
+    expect(previewTitle(preview("nubank_fatura"))).toBe("Fatura do cartão Nubank");
+    expect(previewTitle(preview("ofx", { institution: "Itaú", kind: "conta" }))).toBe("Extrato Itaú (OFX)");
+    expect(previewTitle(preview("csv_banco", { institution: "Inter", kind: "cartao" }))).toBe(
+      "Fatura do cartão Inter (CSV)",
+    );
+    expect(previewTitle(preview("csv_banco"))).toBe("CSV do banco");
   });
 
   it("categoria e conta pelo nome do CSV, sem acento/maiúsculas e só do mesmo tipo", () => {

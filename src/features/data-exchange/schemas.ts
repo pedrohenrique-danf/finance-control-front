@@ -2,10 +2,14 @@ import { z } from "zod";
 
 // SYNC: finance-control-back src/modules/data-exchange/import.types.ts e docs/07 ("Importar e exportar").
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
-export const ACCEPTED_EXTENSIONS = [".csv", ".pdf"] as const;
+export const ACCEPTED_EXTENSIONS = [".csv", ".txt", ".ofx", ".qfx", ".pdf"] as const;
+/** Valor do `accept` do campo de arquivo. */
+export const ACCEPT_ATTRIBUTE = [...ACCEPTED_EXTENSIONS, "text/csv", "application/pdf", "application/x-ofx"].join(",");
 
-export const importSources = ["csv", "nubank_fatura", "nubank_extrato"] as const;
+export const importSources = ["csv", "csv_banco", "ofx", "nubank_fatura", "nubank_extrato"] as const;
 export type ImportSource = (typeof importSources)[number];
+export const importFormats = ["csv", "pdf", "ofx"] as const;
+export type ImportFormat = (typeof importFormats)[number];
 
 export const importRowSchema = z.object({
   line: z.number(),
@@ -33,6 +37,11 @@ export type ImportError = z.output<typeof importErrorSchema>;
 
 export const importPreviewSchema = z.object({
   source: z.enum(importSources),
+  format: z.enum(importFormats),
+  /** Banco identificado no arquivo ("Nubank", "Itaú"...). */
+  institution: z.string().nullable(),
+  /** Extrato de conta ou fatura de cartão. */
+  kind: z.enum(["conta", "cartao"]).nullable(),
   fileName: z.string(),
   period: z.object({ start: z.string(), end: z.string() }).nullable(),
   rows: z.array(importRowSchema),
@@ -43,7 +52,7 @@ export type ImportPreview = z.output<typeof importPreviewSchema>;
 /** Corpo de POST /imports (confirmação das linhas revisadas). */
 export const confirmImportSchema = z.object({
   fileName: z.string().trim().min(1).max(255),
-  format: z.enum(["csv", "pdf"]),
+  format: z.enum(importFormats),
   rows: z
     .array(
       z.object({
@@ -66,7 +75,7 @@ export type ConfirmImportInput = z.output<typeof confirmImportSchema>;
 export const dataOperationSchema = z.object({
   id: z.string(),
   type: z.enum(["importacao", "exportacao"]),
-  format: z.enum(["csv", "xlsx", "pdf"]),
+  format: z.enum(["csv", "xlsx", "pdf", "ofx"]),
   status: z.enum(["pendente", "processando", "concluida", "concluida_com_erros", "falhou"]),
   fileName: z.string().nullable(),
   periodStart: z.string().nullable(),
@@ -105,6 +114,8 @@ export function exportCsvHref(month: string): string {
 
 export const SOURCE_LABELS: Record<ImportSource, string> = {
   csv: "Planilha CSV",
+  csv_banco: "CSV do banco",
+  ofx: "Arquivo OFX",
   nubank_fatura: "Fatura do cartão Nubank",
   nubank_extrato: "Extrato da conta Nubank",
 };
@@ -116,14 +127,36 @@ const fold = (text: string) =>
     .toLowerCase()
     .trim();
 
-/** Conta sugerida: no PDF, a conta Nubank do tipo certo (cartão na fatura, conta corrente no extrato). */
+/** Título da revisão: o leitor e, quando identificados, o tipo de documento e o banco. */
+export function previewTitle(preview: ImportPreview): string {
+  if (preview.source !== "csv_banco" && preview.source !== "ofx") return SOURCE_LABELS[preview.source];
+  if (!preview.kind && !preview.institution) return SOURCE_LABELS[preview.source];
+  const what = preview.kind === "cartao" ? "Fatura do cartão" : "Extrato";
+  return `${what}${preview.institution ? ` ${preview.institution}` : ""} (${preview.format.toUpperCase()})`;
+}
+
+/** Nome do banco reduzido para comparar com o nome/instituição da conta ("Banco Inter" → "inter"). */
+const institutionKey = (name: string) =>
+  fold(name)
+    .replace(/\b(banco|bank|do|da|s\.?a\.?)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
+ * Conta sugerida: a conta do banco identificado e do tipo certo (cartão na fatura, conta corrente no extrato);
+ * sem banco, a primeira do tipo certo; na planilha do app, a primeira conta ativa.
+ */
 export function suggestAccount(preview: ImportPreview, accounts: readonly ExchangeAccount[]): string {
   const active = accounts.filter((a) => a.active);
   if (preview.source === "csv") return active[0]?.id ?? "";
-  const wantedType = preview.source === "nubank_fatura" ? "cartao_credito" : "conta_corrente";
-  const isNubank = (a: ExchangeAccount) => fold(`${a.name} ${a.institution ?? ""}`).includes("nubank");
+  const wantedType = preview.kind === "cartao" ? "cartao_credito" : preview.kind === "conta" ? "conta_corrente" : null;
+  const key = preview.institution ? institutionKey(preview.institution) : "";
+  const isSameBank = (a: ExchangeAccount) => key !== "" && fold(`${a.name} ${a.institution ?? ""}`).includes(key);
   const pick =
-    active.find((a) => isNubank(a) && a.type === wantedType) ?? active.find((a) => a.type === wantedType) ?? active[0];
+    active.find((a) => isSameBank(a) && (!wantedType || a.type === wantedType)) ??
+    (wantedType ? active.find((a) => a.type === wantedType) : undefined) ??
+    active.find(isSameBank) ??
+    active[0];
   return pick?.id ?? "";
 }
 

@@ -18,10 +18,10 @@ function fileError(message: string): ActionResult<never> {
 /** Envia o arquivo ao backend e devolve as linhas lidas (nada é gravado). */
 export async function previewImportAction(formData: FormData): Promise<ActionResult<ImportPreview>> {
   const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) return fileError("Escolha um arquivo CSV ou PDF.");
+  if (!(file instanceof File) || file.size === 0) return fileError("Escolha um arquivo CSV, OFX ou PDF.");
   if (file.size > MAX_FILE_BYTES) return fileError("O arquivo tem mais de 5 MB.");
   if (!ACCEPTED_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext))) {
-    return fileError("Formato não suportado. Envie um CSV ou PDF.");
+    return fileError("Formato não suportado. Envie um CSV, OFX ou PDF.");
   }
   return toActionResult(() => dataExchangeDataSource.preview(file));
 }

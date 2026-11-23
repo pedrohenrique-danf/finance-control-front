@@ -18,7 +18,7 @@ import {
   type ImportPreview,
   matchAccount,
   matchCategory,
-  SOURCE_LABELS,
+  previewTitle,
   suggestAccount,
 } from "../schemas";
 
@@ -72,7 +72,7 @@ export function ImportReview({
     setError(undefined);
     const payload = {
       fileName: preview.fileName,
-      format: preview.source === "csv" ? "csv" : "pdf",
+      format: preview.format,
       rows: preview.rows.flatMap((r, i) => {
         const state = rows[i];
         if (!state?.include) return [];
@@ -115,7 +115,7 @@ export function ImportReview({
         </span>
         <div className="min-w-0 flex-1">
           <h2 id="review-title" className="text-[15px] font-bold text-primary-dark">
-            {SOURCE_LABELS[preview.source]}
+            {previewTitle(preview)}
           </h2>
           <p className="truncate text-xs text-muted-foreground">
             {preview.fileName}

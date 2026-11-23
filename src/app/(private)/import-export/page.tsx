@@ -6,7 +6,7 @@ import { currentMonth } from "@/lib/format/date";
 
 export const metadata: Metadata = { title: "Importar / Exportar" };
 
-// RF07: importar CSV ou PDF do Nubank (lido pelo backend) e exportar CSV do mês.
+// RF07: importar OFX/CSV de bancos, CSV do app ou PDF do Nubank (lido pelo backend) e exportar CSV do mês.
 export default async function ImportExportPage() {
   const [history, categories, accounts] = await Promise.all([
     dataExchangeDataSource.history(),
