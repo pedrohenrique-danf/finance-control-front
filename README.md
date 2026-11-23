@@ -84,6 +84,7 @@ pnpm exec playwright install chromium   # navegador dos testes E2E (uma vez)
 pnpm dev                           # http://localhost:3000 (o backend precisa estar rodando)
 pnpm verify                        # typecheck + lint + testes unitários
 pnpm test:e2e                      # Playwright (desktop + mobile); exige o backend em `pnpm dev:test`
+                                   # depois, no backend: pnpm db:limpar-testes:test
 ```
 
 ## Convenções compartilhadas com o backend
