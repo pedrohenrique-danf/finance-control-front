@@ -44,6 +44,17 @@ No Next 16 o antigo middleware chama-se **`src/proxy.ts`** e exporta a função 
 - Exibir `requestId` em erros 5xx; nunca stack trace.
 - Mensagens de login genéricas ("E-mail ou senha inválidos") — não revele se o e-mail existe.
 
+### LGPD: termos, aceite, exclusão e portabilidade
+
+- Páginas públicas `/termos` e `/privacidade` (`features/legal`), com links no checkbox do cadastro (nova aba), no
+  aviso do Google e no rodapé das telas públicas.
+- O cadastro envia `termsVersion: TERMS_VERSION` (`features/legal/legal-info.ts`); o backend recusa outra versão
+  (`TERMS_NOT_ACCEPTED`) e grava a data do aceite. Ao mudar o texto, mude `TERMS_VERSION` aqui e no backend.
+- Login com Google: o aviso "Ao continuar com o Google, você aceita…" junto ao botão; o backend grava o aceite.
+- Perfil → **Seus dados**: "Baixar meus dados" (`GET /api/v1/exports/me`, JSON) e "Excluir conta"
+  (`authClient.deleteUser`, com a senha nas contas de e-mail; o backend também exige).
+- `PRIVACY_CONTACT_EMAIL` (em `legal-info.ts`) ainda é `null`: as páginas dizem que o contato será publicado.
+
 ## Exemplos de código
 
 ### Cliente Better Auth (mesma origem)

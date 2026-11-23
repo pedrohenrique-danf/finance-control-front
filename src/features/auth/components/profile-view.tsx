@@ -20,6 +20,7 @@ import {
   type ProfileFormValues,
   profileFormSchema,
 } from "../schemas";
+import { AccountData } from "./account-data";
 import { PasswordInput } from "./password-input";
 import { PasswordStrengthMeter } from "./password-strength-meter";
 
@@ -138,6 +139,7 @@ export function ProfileView({ user, settings }: { user: { name: string; email: s
         <PasswordForm />
       </div>
       {settings}
+      <AccountData />
       <div className={card}>
         <SectionHeader title="Sessão" />
         <p className="text-sm text-muted-foreground">

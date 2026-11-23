@@ -51,8 +51,19 @@ export function AuthShell({ title, subtitle, back, footer, children }: AuthShell
           {children}
         </div>
         {footer ? (
-          <div className="mx-auto w-full max-w-md px-6 pb-10 text-center text-sm text-muted-foreground">{footer}</div>
+          <div className="mx-auto w-full max-w-md px-6 pb-4 text-center text-sm text-muted-foreground">{footer}</div>
         ) : null}
+        <nav
+          aria-label="Documentos"
+          className="mx-auto flex w-full max-w-md justify-center gap-5 px-6 pb-8 text-xs text-muted-foreground"
+        >
+          <Link href="/termos" className="underline-offset-4 hover:underline">
+            Termos de uso
+          </Link>
+          <Link href="/privacidade" className="underline-offset-4 hover:underline">
+            Política de privacidade
+          </Link>
+        </nav>
       </div>
     </main>
   );

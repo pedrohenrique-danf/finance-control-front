@@ -4,7 +4,15 @@ export interface AuthClientError {
   code?: string | undefined;
 }
 
-export type AuthOperation = "login" | "register" | "forgot" | "reset" | "google" | "profile" | "change-password";
+export type AuthOperation =
+  | "login"
+  | "register"
+  | "forgot"
+  | "reset"
+  | "google"
+  | "profile"
+  | "change-password"
+  | "delete-account";
 
 const GENERIC = "Não foi possível concluir agora. Tente novamente em instantes.";
 
@@ -22,6 +30,7 @@ export function authErrorMessage(operation: AuthOperation, error: AuthClientErro
       }
       if (error.code === "PASSWORD_TOO_SHORT") return "A senha precisa de pelo menos 8 caracteres.";
       if (error.code === "PASSWORD_TOO_LONG") return "A senha pode ter no máximo 128 caracteres.";
+      if (error.code === "TERMS_NOT_ACCEPTED") return "Aceite os termos de uso e a política de privacidade.";
       return GENERIC;
     case "forgot":
       return "Não foi possível enviar o link agora. Tente novamente mais tarde.";
@@ -36,6 +45,12 @@ export function authErrorMessage(operation: AuthOperation, error: AuthClientErro
       }
       if (error.code === "INVALID_PASSWORD" || error.status === 400) return "A senha atual não confere.";
       return GENERIC;
+    case "delete-account":
+      if (error.code === "INVALID_PASSWORD" || error.code === "PASSWORD_REQUIRED") return "Senha incorreta.";
+      if (error.code === "SESSION_EXPIRED") {
+        return "Por segurança, saia e entre de novo com o Google antes de excluir a conta.";
+      }
+      return "Não foi possível excluir a conta agora. Tente novamente.";
     case "google":
       return "Não foi possível entrar com o Google agora. Tente novamente ou use e-mail e senha.";
   }
