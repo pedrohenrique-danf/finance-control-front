@@ -15,6 +15,7 @@ import { formatDate, formatMonthLabel, isMonth } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 import { previewImportAction } from "../actions";
 import {
+  ACCEPT_ATTRIBUTE,
   type DataOperation,
   type ExchangeAccount,
   type ExchangeCategory,
@@ -42,7 +43,7 @@ function ImportCard({ onPreview }: { onPreview: (preview: ImportPreview) => void
 
   function read() {
     if (!file) {
-      setError("Escolha um arquivo CSV ou PDF.");
+      setError("Escolha um arquivo CSV, OFX ou PDF.");
       return;
     }
     if (file.size > MAX_FILE_BYTES) {
@@ -76,17 +77,17 @@ function ImportCard({ onPreview }: { onPreview: (preview: ImportPreview) => void
         )}
       >
         <FileUp className="size-7 text-primary" aria-hidden />
-        <span className="text-sm font-semibold break-all">{file ? file.name : "Escolher arquivo CSV ou PDF"}</span>
+        <span className="text-sm font-semibold break-all">{file ? file.name : "Escolher arquivo CSV, OFX ou PDF"}</span>
         <span className="text-xs text-muted-foreground">
           {file
             ? `${(file.size / 1024).toFixed(0)} KB`
-            : "Fatura ou extrato do Nubank em PDF, ou planilha CSV · até 5 MB"}
+            : "Extrato ou fatura em OFX ou CSV de qualquer banco, ou PDF do Nubank · até 5 MB"}
         </span>
         <input
           ref={inputRef}
           id="import-file"
           type="file"
-          accept=".csv,.pdf,text/csv,application/pdf"
+          accept={ACCEPT_ATTRIBUTE}
           className="sr-only"
           onChange={(e) => {
             setFile(e.target.files?.[0] ?? null);
@@ -99,9 +100,15 @@ function ImportCard({ onPreview }: { onPreview: (preview: ImportPreview) => void
       </Button>
       <details className="rounded-2xl bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
         <summary className="flex min-h-9 cursor-pointer items-center font-semibold text-foreground">
-          Formato da planilha CSV
+          Quais arquivos posso enviar?
         </summary>
         <p className="mt-1">
+          <strong className="text-foreground">Do banco:</strong> no app ou internet banking, exporte o extrato ou a
+          fatura em OFX (também chamado de Money ou Quicken) ou em CSV. O banco e as colunas são reconhecidos sozinhos.
+          Do Nubank, o PDF também funciona.
+        </p>
+        <p className="mt-2">
+          <strong className="text-foreground">Planilha própria:</strong>
           Padrão do Excel em português: colunas separadas por ponto e vírgula, data dd/mm/aaaa e valor 1.234,56.
           Obrigatórias: data, descricao, valor e tipo (receita ou despesa).
         </p>

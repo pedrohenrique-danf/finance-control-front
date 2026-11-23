@@ -52,7 +52,7 @@ Definir os padrões de interface do FinanceControl: abordagem **UI-First** e **m
 
 ### Importação e exportação (RF07)
 
-- Página única `import-export`: seleção de arquivo (CSV ou PDF de fatura/extrato do Nubank), pré-visualização, exportação por mês e histórico.
+- Página única `import-export`: seleção de arquivo (OFX ou CSV de qualquer banco, planilha CSV do app ou PDF de fatura/extrato do Nubank), pré-visualização, exportação por mês e histórico.
 - Importação em duas etapas: a Server Action envia o arquivo ao backend (`POST /api/v1/imports/preview`, multipart, até 5 MB);
   a tela mostra as linhas lidas para escolher conta, categoria e o que importar, e só então confirma (`POST /api/v1/imports`).
 - Exibir erros de importação por linha/campo de forma legível (lista recolhível com número da linha).
