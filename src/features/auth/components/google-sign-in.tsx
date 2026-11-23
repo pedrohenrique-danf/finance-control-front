@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -61,9 +62,23 @@ export function GoogleSignInButton({ label = "Continuar com Google", next }: { l
   }
 
   return (
-    <Button type="button" variant="outline" size="lg" className="w-full" onClick={onClick} disabled={pending}>
-      <GoogleIcon />
-      {pending ? "Conectando…" : label}
-    </Button>
+    <div className="space-y-2">
+      <Button type="button" variant="outline" size="lg" className="w-full" onClick={onClick} disabled={pending}>
+        <GoogleIcon />
+        {pending ? "Conectando…" : label}
+      </Button>
+      {/* O login social cria a conta sem o checkbox: o aviso registra que continuar é aceitar (LGPD). */}
+      <p className="text-center text-xs leading-relaxed text-muted-foreground">
+        Ao continuar com o Google, você aceita os{" "}
+        <Link href="/termos" target="_blank" className="font-semibold text-primary underline underline-offset-4">
+          Termos de uso
+        </Link>{" "}
+        e a{" "}
+        <Link href="/privacidade" target="_blank" className="font-semibold text-primary underline underline-offset-4">
+          Política de privacidade
+        </Link>
+        .
+      </p>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import { FormAlert } from "@/components/common/form-alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { TERMS_VERSION } from "@/features/legal";
 import { authClient } from "@/lib/auth/auth-client";
 import { authErrorMessage } from "../auth-errors";
 import { type RegisterFormInput, type RegisterFormValues, registerFormSchema } from "../schemas";
@@ -31,6 +33,7 @@ export function RegisterForm() {
       name: values.name,
       email: values.email,
       password: values.password,
+      termsVersion: TERMS_VERSION, // o backend grava o aceite e recusa o cadastro sem ele
     });
     if (error) {
       form.setError("root", { message: authErrorMessage("register", error) });
@@ -95,10 +98,25 @@ export function RegisterForm() {
                   aria-describedby={errors.terms ? fieldErrorId("terms") : undefined}
                   className="mt-0.5 size-5 rounded-md"
                 />
-                {/* TODO(conteúdo): páginas de termos de uso e política de privacidade [PENDENTE DE DEFINIÇÃO]. */}
+                {/* Os links abrem em nova aba: o formulário preenchido não se perde. */}
                 <span>
-                  Li e aceito os <span className="font-semibold text-primary">termos de uso</span> e a{" "}
-                  <span className="font-semibold text-primary">política de privacidade</span>.
+                  Li e aceito os{" "}
+                  <Link
+                    href="/termos"
+                    target="_blank"
+                    className="font-semibold text-primary underline underline-offset-4"
+                  >
+                    termos de uso
+                  </Link>{" "}
+                  e a{" "}
+                  <Link
+                    href="/privacidade"
+                    target="_blank"
+                    className="font-semibold text-primary underline underline-offset-4"
+                  >
+                    política de privacidade
+                  </Link>
+                  .
                 </span>
               </label>
             )}

@@ -46,7 +46,7 @@ finance-control-front/
 │   │       ├── import-export/page.tsx    # RF07
 │   │       ├── import-export/export/route.ts  # modelo de planilha (?modelo=1); o CSV do mês vem de /api/v1/exports
 │   │       ├── notifications/page.tsx
-│   │       └── profile/page.tsx          # nome e senha (Better Auth) + avisos no app (notifications)
+│   │       └── profile/page.tsx          # nome, senha, seus dados (baixar/excluir) + avisos no app
 │   ├── features/                         # um diretório por domínio
 │   │   ├── auth/                         # login, cadastro, senha, perfil
 │   │   ├── accounts/
@@ -55,6 +55,7 @@ finance-control-front/
 │   │   ├── recurrences/
 │   │   ├── dashboard/                    # gráficos em SVG puro
 │   │   ├── data-exchange/                # importar (CSV/PDF Nubank via backend) e exportar
+│   │   ├── legal/                        # termos de uso e política de privacidade (TERMS_VERSION)
 │   │   └── notifications/
 │   ├── components/
 │   │   ├── ui/                           # primitivos shadcn/ui (button/input/select/textarea ajustados à identidade)
